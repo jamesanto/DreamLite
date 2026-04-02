@@ -3,58 +3,12 @@
 <div align="center">
 
 [![DreamLite](https://img.shields.io/badge/Paper-DreamLite-2b9348.svg?logo=arXiv)](https://arxiv.org/abs/2603.28713)&nbsp;
-[![huggingface weights](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-DreamLite-yellow)](https://huggingface.co/DreamLite)&nbsp;
-[![project page](https://img.shields.io/badge/Project_page-More_visualizations-green?logo=bytedance)](https://carlofkl.github.io/dreamlite/)&nbsp;
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=carlofkl.DreamLite)
 
 </div>
 
 ## 🌿 Overview
 
 We propose **DreamLite**, a compact unified on-device diffusion model (**0.39B**) that supports both **text-to-image generation** and **text-guided image editing** within a single network. DreamLite is built on a pruned mobile U-Net backbone and unifies conditioning through **In-Context spatial concatenation** in the latent space. By employing step distillation, DreamLite achieves **4-step inference**, generating or editing a **1024×1024** image in ~**3 seconds (using 4-bit Qwen VL and fp16 VAE+UNet)** on an iPhone 17 Pro — fully on-device, no cloud required.
-
-<!-- <div align='center'>
-<img src="./assets/cover.png" class="interpolation-image" alt="teasor" width="95%" />
-</div>
-
-<br>
-
-<div align='center'>
-<img src="./assets/pipeline.png" class="interpolation-image" alt="architecture" width="95%" />
-<br>
-<em>Overall architecture of DreamLite.</em>
-</div> -->
-
-
-## 📰 News
-
-**2026.03**: 🎉🎉🎉 DreamLite is released! See our [project page](https://carlofkl.github.io/dreamlite/) and [paper](https://arxiv.org/abs/2603.28713).
-
-
-<!-- ## 🎬 On-Device Demo
-
-Real-time generation & editing on iPhone 17 Pro — no cloud, fully on-device.
-
-<table>
-  <tr>
-    <th align="center">Image Editing</th>
-    <th align="center">Style Transfer</th>
-    <th align="center">Background Change</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <video src="assets/demo1.mov" width="280" autoplay loop muted playsinline></video>
-    </td>
-    <td align="center">
-      <video src="assets/demo2.mov" width="280" autoplay loop muted playsinline></video>
-    </td>
-    <td align="center">
-      <video src="assets/demo3.mov" width="280" autoplay loop muted playsinline></video>
-    </td>
-  </tr>
-</table> -->
-
-<!-- > **Note**: If the videos do not render on GitHub, please visit our [project page](https://carlofkl.github.io/dreamlite/) to view the full demos. -->
 
 
 ## ⚙️ Getting Started
@@ -247,7 +201,6 @@ Quantitative comparison with state-of-the-art methods on generation and editing 
 - [ ] Release inference code
 - [ ] Release model weights on HuggingFace
 - [ ] Release online demo
-- [ ] Release Android & iOS App
 
 
 ## Acknowledgement
