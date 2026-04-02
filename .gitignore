@@ -5,3 +5,23 @@ dreamlite_export
 AppleDevice
 .vscode
 infer_mobile.py
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+venv/
+env/
+.env/
+
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.bin
+
+# 日志和缓存
+logs/
+*.log
+.cache/
