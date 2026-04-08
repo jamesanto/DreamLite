@@ -1,11 +1,5 @@
 # DreamLite: A Lightweight On-Device Unified Model for Image Generation and Editing
 
-<div align="center">
-
-[![DreamLite](https://img.shields.io/badge/Paper-DreamLite-2b9348.svg?logo=arXiv)](https://arxiv.org/abs/2603.28713)&nbsp;
-
-</div>
-
 ## 🌿 Overview
 
 We propose **DreamLite**, a compact unified on-device diffusion model (**0.39B**) that supports both **text-to-image generation** and **text-guided image editing** within a single network. DreamLite is built on a pruned mobile U-Net backbone and unifies conditioning through **In-Context spatial concatenation** in the latent space. By employing step distillation, DreamLite achieves **4-step inference**, generating or editing a **1024×1024** image in ~**3 seconds (using 4-bit Qwen VL and fp16 VAE+UNet)** on an iPhone 17 Pro — fully on-device, no cloud required.

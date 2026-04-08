@@ -1,0 +1,15 @@
+/mnt/bn/mobile-hl/projects/DreamLite/diffusers/pipelines/latent_diffusion/pipeline_latent_diffusion_superresolution.py, line, 123 have some sensitive information: b48e17b8-b231-47cd-a270-4ffa5a93fa3e
+/mnt/bn/mobile-hl/projects/DreamLite/diffusers/pipelines/latent_diffusion/__pycache__/pipeline_latent_diffusion_superresolution.cpython-310.pyc, line, 89 have some sensitive information: b48e17b8-b231-47cd-a270-4ffa5a93fa3e
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 5 have some sensitive information: token_id": 151655,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 10 have some sensitive information: token_id": 151643,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 12 have some sensitive information: token_id": 151645,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 20 have some sensitive information: attention_heads": 16,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 39 have some sensitive information: transformers_version": "4.57.0.
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 40 have some sensitive information: token_id": 151656,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 61 have some sensitive information: token_id": 151653,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json, line, 62 have some sensitive information: token_id": 151652
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/config.json have some aigc sensitive information: ['layer', 'token', 'head']
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/generation_config.json, line, 2 have some sensitive information: token_id": 151643,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/generation_config.json, line, 3 have some sensitive information: token_id": 151643,
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/generation_config.json, line, 5 have some sensitive information: token_id": [
+/mnt/bn/mobile-hl/projects/DreamLite/exported_models/text_encoder/generation_config.json, line, 13 have some sensitive information: transformers_version": "4.56.0"
