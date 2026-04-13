@@ -33,7 +33,6 @@ def parse_args():
         
     # Inference Params
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--bucket", type=int, default=0, choices=[0, 1, 2, 54, 765])
     parser.add_argument("--weight_dtype", type=str, default="bfloat16", choices=["float16", "bfloat16", "float32"])
     parser.add_argument("--num_inference_steps", type=int, default=4)
     parser.add_argument("--prompt", type=str, default="a photo of a dog")
@@ -78,7 +77,6 @@ def main():
         width=width,
         num_inference_steps=args.num_inference_steps,
         generator=torch.Generator("cpu").manual_seed(42),
-        bucket=args.bucket,
     ).images[0]
 
     if image.size != (width, height):

@@ -29,16 +29,17 @@ from diffusers import (
     FlowMatchEulerDiscreteScheduler
 )
 from diffusers.models import AutoencoderTiny
-from modules.pipeline_utils import NuwaPipeline
+from modules.pipeline_utils_mobile import DreamLiteMobilePipeline
+from modules.pipeline_utils import DreamLitePipeline
 
 def load_model(
-    model_path, device="cuda", dtype="bfloat16"
+    model_path, device="cuda", dtype="bfloat16", mode="mobile"
 ):
     print(f'[INFO] Loading Checkpoint: {model_path}')
 
     # text-encoder
     text_encoder_path = "models/Qwen3-VL-2B-Instruct"
-    text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(text_encoder_path, torch_dtype=dtype).to(device)
+    text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(text_encoder_path).to(device=device, dtype=dtype)
     tokenizer = AutoTokenizer.from_pretrained(text_encoder_path)
     processor = AutoProcessor.from_pretrained(text_encoder_path)
 
@@ -65,15 +66,25 @@ def load_model(
     noise_scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(scheduler_path, subfolder="scheduler")
     
     # Build Pipeline
-    pipe = NuwaPipeline(
-        text_encoder=text_encoder,
-        tokenizer=tokenizer,
-        processor=processor,
-        vae=vae,
-        unet=unet,
-        scheduler=noise_scheduler,
-    )
-    pipe.ckpt_path = unet_path
+    if mode == 'mobile':
+        pipe = DreamLiteMobilePipeline(
+            text_encoder=text_encoder,
+            tokenizer=tokenizer,
+            processor=processor,
+            vae=vae,
+            unet=unet,
+            scheduler=noise_scheduler,
+        )
+        pipe.ckpt_path = unet_path
+    else:
+        pipe = DreamLitePipeline(
+            text_encoder=text_encoder,
+            tokenizer=tokenizer,
+            processor=processor,
+            vae=vae,
+            unet=unet,
+            scheduler=noise_scheduler,
+        )
         
     return pipe
 

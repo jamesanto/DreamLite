@@ -45,21 +45,6 @@ else:
 
 logger = logging.get_logger(__name__)
 
-
-# 预定义的宽高比 Bucket (Base 1024x1024)
-TARGET_BUCKETS_V54 = [
-    [1248, 832], [1024, 1024], [896, 1184], [832, 1248],
-    [1376, 768], [1184, 896], [928, 1120], [864, 1216],
-    [1216, 864], [1312, 800], [768, 1376], [1280, 832],
-    [1152, 896], [1344, 768], [1120, 928], [1408, 736], [1440, 736]
-]
-TARGET_BUCKETS_V765 = [
-    [1248, 832], [1024, 1024], [896, 1152], [1248, 832], [960, 1088], 
-    [1088, 960], [1152, 896], [832, 1248], [832, 1248], [1312, 800], 
-    [800, 1312], [1344, 768], [768, 1344], [1440, 736], [736, 1440], 
-    [1472, 704], [704, 1472], [1600, 672], [672, 1568], [1184, 896]
-]
-
 # --- Helper Functions ---
 
 def calculate_shift(
@@ -97,15 +82,9 @@ def retrieve_timesteps(
         timesteps = scheduler.timesteps
     return timesteps, num_inference_steps
 
-def _get_closest_bucket(buckets, w, h):
-    target_ar = w / h
-    best_bucket = min(buckets, key=lambda b: abs((b[0]/b[1]) - target_ar))
-    best_bucket = [int(x * 2) for x in best_bucket]
-    return tuple(best_bucket)
-
-
 # --- Pipeline Class ---
-class DreamLitePipeline(
+
+class DreamLiteMobilePipeline(
     DiffusionPipeline,
     FluxLoraLoaderMixin,
     FromSingleFileMixin,
@@ -160,7 +139,7 @@ class DreamLitePipeline(
             template = "<|im_start|>system\nDescribe the key features of the input image (color, shape, size, texture, objects, background), then explain how the user's text instruction should alter or modify the image. Generate a new image that meets the user's requirements while maintaining consistency with the original input where appropriate.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>{}<|im_end|>\n<|im_start|>assistant\n"
             
             txts = [template.format(p) for p in prompts]
-            images = [image.resize((256, 256), Image.Resampling.LANCZOS)] * len(prompts)
+            images = [image.resize((224, 224), Image.Resampling.LANCZOS)] * len(prompts)
             
             tk_out = self.processor(
                 text=txts, images=images, padding=True, return_tensors="pt",
@@ -260,14 +239,11 @@ class DreamLitePipeline(
     @torch.no_grad()
     def __call__(
         self,
-        prompt: Optional[str] = None,
-        negative_prompt: Optional[str] = None,
+        prompt: Union[str, List[str]] = None,
         image: Optional[Image.Image] = None,
         height: Optional[int] = None,
         width: Optional[int] = None,
-        guidance_scale: float = 7.5,
-        image_guidance_scale: float = 1.0,
-        num_inference_steps: int = 30,
+        num_inference_steps: int = 4,
         sigmas: Optional[List[float]] = None,
         num_images_per_prompt: Optional[int] = 1,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
@@ -275,32 +251,17 @@ class DreamLitePipeline(
         return_dict: bool = True,
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
-        bucket: int = 0,
     ):
         # 1. Init Locals
         height = height or self.default_sample_size * self.vae_scale_factor
         width = width or self.default_sample_size * self.vae_scale_factor
-        self._guidance_scale = guidance_scale
-        self._image_guidance_scale = image_guidance_scale
         task = "generate" if image is None else "edit"
         device = self._execution_device
         dtype = self.text_encoder.dtype
         batch_size = 1 # 强制 batch=1
-        if negative_prompt is None:
-            negative_prompt = ""
         
         # 使用局部变量 sigmas
         sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps) if sigmas is None else sigmas
-
-        # 2. Prepare Dimensions (Buckets)
-        if bucket == 1:
-            height = width = 2048
-        elif bucket == 54:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
-        elif bucket == 765:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
-        else:
-            height = width = 1024
 
         # 3. Prepare Time IDs
         original_size = (width, height)
@@ -342,7 +303,7 @@ class DreamLitePipeline(
             prompt = "[Generate]: " + prompt
             prompt_embeds, text_attention_mask = self.encode_prompt(
                 mode="generate", 
-                prompts=[negative_prompt, prompt], 
+                prompts=[prompt], 
                 device=device,
                 dtype=dtype,
                 text_pad_embedding=text_pad_embedding,
@@ -356,7 +317,7 @@ class DreamLitePipeline(
             prompt = "[Edit]: A diptych with two side-by-side images of the same scene. Compared to the right side, the left one has " + prompt
             prompt_embeds, text_attention_mask = self.encode_prompt(
                 mode="edit",
-                prompts=[negative_prompt, negative_prompt, prompt],
+                prompts=[prompt],
                 image=image,
                 device=device,
                 dtype=dtype,
@@ -367,7 +328,6 @@ class DreamLitePipeline(
                 dtype=dtype,
                 device=device,
             )
-            uncond_image_latents = torch.zeros_like(latents)
 
         # 7. Denoising Loop
         with self.progress_bar(total=num_inference_steps) as progress_bar:
@@ -375,16 +335,17 @@ class DreamLitePipeline(
                 
                 # === Construct Batch Input ===
                 if task == "generate":
-                    latents_in = torch.cat([latents] * 2)
-                    cond_img_in = torch.cat([image_latents] * 2)
+                    latents_in = latents
+                    cond_img_in = image_latents
                     model_input = torch.cat([latents_in, cond_img_in], dim=3)
-                    time_ids_in = torch.cat([add_time_ids] * 2)
+                    # model_input = latents_in
+                    time_ids_in = add_time_ids
 
                 elif task == "edit":
-                    latents_in = torch.cat([latents] * 3)
-                    cond_img_in = torch.cat([uncond_image_latents, image_latents, image_latents])
+                    latents_in = latents
+                    cond_img_in = image_latents 
                     model_input = torch.cat([latents_in, cond_img_in], dim=3) 
-                    time_ids_in = torch.cat([add_time_ids] * 3)
+                    time_ids_in = add_time_ids
 
                 # === UNet Forward ===
                 noise_pred = self.unet(
@@ -397,17 +358,8 @@ class DreamLitePipeline(
                 )[0]
 
                 # === Classifier-Free Guidance ===
+
                 noise_pred = noise_pred[..., :latents.shape[-1]]
-                if task == "generate":
-                    noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + self._guidance_scale * (noise_pred_cond - noise_pred_uncond)
-                elif task == "edit":
-                    noise_pred_uncond, noise_pred_image, noise_pred_text = noise_pred.chunk(3)
-                    noise_pred = noise_pred_uncond + \
-                        self._guidance_scale * (noise_pred_text - noise_pred_image) + \
-                        self._image_guidance_scale * (noise_pred_image - noise_pred_uncond)
-                else:
-                    raise ValueError("Invalid task type")
 
                 # === Scheduler Step ===
                 latents_dtype = latents.dtype

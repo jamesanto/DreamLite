@@ -5,6 +5,7 @@ dreamlite_export
 AppleDevice
 .vscode
 infer_mobile.py
+benchmark
 
 __pycache__/
 *.py[cod]
