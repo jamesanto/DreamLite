@@ -4,7 +4,7 @@ exported_models
 dreamlite_export
 AppleDevice
 .vscode
-infer_mobile.py
+infer_mobile_w8a8.py
 benchmark
 
 __pycache__/

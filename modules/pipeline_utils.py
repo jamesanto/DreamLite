@@ -160,7 +160,7 @@ class DreamLitePipeline(
             template = "<|im_start|>system\nDescribe the key features of the input image (color, shape, size, texture, objects, background), then explain how the user's text instruction should alter or modify the image. Generate a new image that meets the user's requirements while maintaining consistency with the original input where appropriate.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>{}<|im_end|>\n<|im_start|>assistant\n"
             
             txts = [template.format(p) for p in prompts]
-            images = [image.resize((256, 256), Image.Resampling.LANCZOS)] * len(prompts)
+            images = [image.resize((512, 512), Image.Resampling.LANCZOS)] * len(prompts)
             
             tk_out = self.processor(
                 text=txts, images=images, padding=True, return_tensors="pt",

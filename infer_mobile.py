@@ -1,44 +1,41 @@
-# Copyright (c) 2026 ByteDance Ltd. and/or its affiliates.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+import os
+import io
+import json
+import time
 import argparse
 import warnings
+from pathlib import Path
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import torch
+import numpy as np
+from tqdm import tqdm
 from PIL import Image
 from diffusers.utils import load_image
-
 from modules.model_utils import load_model
+
+# import bytenn_torch
+
 warnings.filterwarnings("ignore")
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="DreamLite Inference Script")
+
+def parse_args(): 
+    parser = argparse.ArgumentParser(description="DreamLite Inference Script, 4 Step, w/o CFG & IMG_CFG")
     
     # Model & Structure
-    parser.add_argument("--model_path", type=str, default="./models/42-20000.pt")
+    parser.add_argument("--model_path", type=str, default="/mnt/bn/mobile-hl/projects/DreamLite/models/20-40000")
         
     # Inference Params
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--weight_dtype", type=str, default="bfloat16", choices=["float16", "bfloat16", "float32"])
-    parser.add_argument("--num_inference_steps", type=int, default=30)
-    parser.add_argument("--prompt", type=str, default="a photo of a dog")
+    parser.add_argument("--bucket", type=int, default=0, choices=[0, 1, 2, 54, 765])
+    parser.add_argument("--weight_dtype", type=str, default="float32", choices=["float16", "bfloat16", "float32"])
+    parser.add_argument("--num_inference_steps", type=int, default=4)
+    parser.add_argument("--prompt", type=str, default="a naked man")
     parser.add_argument("--image_path", type=str, default="")
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
-    parser.add_argument("--guidance_scale", type=float, default=7.5)
-    parser.add_argument("--image_guidance_scale", type=float, default=1.0)
         
     return parser.parse_args()
 
@@ -58,9 +55,8 @@ def main():
         args.model_path,
         device=args.device,
         dtype=weight_dtype,
-        mode='other'
     )
-    
+
     # 3. Setup Data
     prompt = args.prompt
     input_image = load_image(args.image_path) if args.image_path else None
@@ -70,20 +66,18 @@ def main():
         width, height = args.height, args.width
 
     # 4. Setup Output Directory
-
     image = pipeline(
         prompt=prompt,
         image=input_image,
         height=height, # Pipeline expects H, W order usually
         width=width,
-        guidance_scale=args.guidance_scale,
-        image_guidance_scale=args.image_guidance_scale,
         num_inference_steps=args.num_inference_steps,
         generator=torch.Generator("cpu").manual_seed(42),
     ).images[0]
 
     if image.size != (width, height):
         image = image.resize((width, height), Image.Resampling.LANCZOS)
+    
     image.save(f"{prompt.replace(' ', '_')}.png")
 
 
@@ -92,11 +86,8 @@ if __name__ == "__main__":
 
 
 """
-source /mnt/bn/mobile-hl/anaconda3/bin/activate 
-conda activate mobile_train
-Edit task: python infer.py --image_path "a_photo_of_a_cat.png"  --prompt "let the cat wear sunglasses" 
-Generate task: python infer.py --prompt "a photo of a cat"
-
 source /mnt/bn/humangen-hl2/kailai/miniconda3/bin/activate 
 conda activate dreamlite
+Edit task: python infer_mobile.py --image_path "a_photo_of_a_cat.png"  --prompt "let the cat wear sunglasses" 
+Generate task: python infer_mobile.py --prompt "a photo of a cat"
 """

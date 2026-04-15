@@ -24,10 +24,10 @@ from transformers import (
 )
 from diffusers import (
     AutoencoderKL, 
-    DreamLiteUNetModel, 
     UNet2DConditionModel, 
     FlowMatchEulerDiscreteScheduler
 )
+from dreamlite import DreamLiteUNetModel
 from diffusers.models import AutoencoderTiny
 from modules.pipeline_utils_mobile import DreamLiteMobilePipeline
 from modules.pipeline_utils import DreamLitePipeline
