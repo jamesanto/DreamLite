@@ -14,12 +14,11 @@
 
 import argparse
 import warnings
-
 import torch
 from PIL import Image
 from diffusers.utils import load_image
 
-from modules.model_utils import load_model
+from dreamlite import DreamLitePipeline 
 warnings.filterwarnings("ignore")
 
 
@@ -27,13 +26,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description="DreamLite Inference Script")
     
     # Model & Structure
-    parser.add_argument("--model_path", type=str, default="./models/42-20000.pt")
+    # 这里不再指向具体的 .pt 文件，而是指向整个 diffusers 目录（或以后填入 Hugging Face 的 Repo ID，如 "Carlo/DreamLite"）
+    parser.add_argument("--model_id", type=str, default="models/DreamLite-base")
         
     # Inference Params
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--weight_dtype", type=str, default="bfloat16", choices=["float16", "bfloat16", "float32"])
-    parser.add_argument("--num_inference_steps", type=int, default=30)
-    parser.add_argument("--prompt", type=str, default="a photo of a dog")
+    parser.add_argument("--num_inference_steps", type=int, default=28)
+    parser.add_argument("--prompt", type=str, default="a dog running on the grass")
     parser.add_argument("--image_path", type=str, default="")
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
@@ -41,8 +41,6 @@ def parse_args():
     parser.add_argument("--image_guidance_scale", type=float, default=1.0)
         
     return parser.parse_args()
-
-# --- Main Execution ---
 
 def main():
     args = parse_args()
@@ -53,13 +51,12 @@ def main():
         "float32": torch.float32
     }[args.weight_dtype]
 
-    # 2. Load Model
-    pipeline = load_model(
-        args.model_path,
-        device=args.device,
-        dtype=weight_dtype,
-        mode='other'
-    )
+    print(f"Loading diffusers pipeline from: {args.model_id}")
+    
+    pipeline = DreamLitePipeline.from_pretrained(
+        args.model_id,
+        torch_dtype=weight_dtype,
+    ).to(args.device)
     
     # 3. Setup Data
     prompt = args.prompt
@@ -69,12 +66,11 @@ def main():
     else:
         width, height = args.height, args.width
 
-    # 4. Setup Output Directory
-
+    print("Generating image...")
     image = pipeline(
         prompt=prompt,
         image=input_image,
-        height=height, # Pipeline expects H, W order usually
+        height=height, 
         width=width,
         guidance_scale=args.guidance_scale,
         image_guidance_scale=args.image_guidance_scale,
@@ -84,19 +80,10 @@ def main():
 
     if image.size != (width, height):
         image = image.resize((width, height), Image.Resampling.LANCZOS)
-    image.save(f"{prompt.replace(' ', '_')}.png")
-
+    
+    out_path = f"{prompt.replace(' ', '_')}.png"
+    image.save(out_path)
+    print(f"Image saved to {out_path}")
 
 if __name__ == "__main__":
     main()
-
-
-"""
-source /mnt/bn/mobile-hl/anaconda3/bin/activate 
-conda activate mobile_train
-Edit task: python infer.py --image_path "a_photo_of_a_cat.png"  --prompt "let the cat wear sunglasses" 
-Generate task: python infer.py --prompt "a photo of a cat"
-
-source /mnt/bn/humangen-hl2/kailai/miniconda3/bin/activate 
-conda activate dreamlite
-"""

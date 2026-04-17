@@ -6,6 +6,7 @@ AppleDevice
 .vscode
 infer_mobile_w8a8.py
 benchmark
+modules
 
 __pycache__/
 *.py[cod]

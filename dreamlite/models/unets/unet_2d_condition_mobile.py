@@ -353,7 +353,7 @@ class DreamLiteUNetModel(
         # down
         output_channel = block_out_channels[0]
         for i, down_block_type in enumerate(down_block_types):
-            print(down_block_type, layers_per_block[i], transformer_layers_per_block[i])
+            # print(down_block_type, layers_per_block[i], transformer_layers_per_block[i])
             input_channel = output_channel
             output_channel = block_out_channels[i]
             is_final_block = i == len(block_out_channels) - 1
@@ -439,7 +439,7 @@ class DreamLiteUNetModel(
             prev_output_channel = output_channel
             output_channel = reversed_block_out_channels[i]
             input_channel = reversed_block_out_channels[min(i + 1, len(block_out_channels) - 1)]
-            print(up_block_type, layers_per_block[i], reversed_transformer_layers_per_block[i])
+            # print(up_block_type, layers_per_block[i], reversed_transformer_layers_per_block[i])
 
             # add upsample block for all BUT final layer
             if not is_final_block:

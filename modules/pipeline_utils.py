@@ -12,30 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import inspect
-import math
-from typing import Any, Callable, Dict, List, Optional, Union, Tuple
-from PIL import Image
-import numpy as np
 import torch
+import numpy as np
+from typing import List, Optional, Union, Tuple
+from PIL import Image
 from torch.nn.utils.rnn import pad_sequence
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoProcessor
-from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img import retrieve_latents, deprecate
-from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
-from diffusers.loaders import FluxIPAdapterMixin, FluxLoraLoaderMixin, FromSingleFileMixin, TextualInversionLoaderMixin
-from diffusers.models.autoencoders import AutoencoderKL
-from diffusers.models.transformers import FluxTransformer2DModel
-from diffusers.models.unets import UNet2DConditionModel
-from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
-from diffusers.utils import (
-    is_torch_xla_available,
-    logging,
-    replace_example_docstring,
+from transformers import AutoTokenizer, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
+from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img import retrieve_latents
+from diffusers.image_processor import VaeImageProcessor
+from diffusers.loaders import (
+    FluxIPAdapterMixin, 
+    FluxLoraLoaderMixin, 
+    FromSingleFileMixin, 
+    TextualInversionLoaderMixin
 )
+from diffusers.models import AutoencoderTiny
+from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
+from diffusers.utils import is_torch_xla_available, logging
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
+
+from dreamlite.models import DreamLiteUNetModel
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -45,14 +44,16 @@ else:
 
 logger = logging.get_logger(__name__)
 
-
-# 预定义的宽高比 Bucket (Base 1024x1024)
+# ==========================================
+# Constant Definitions
+# ==========================================
 TARGET_BUCKETS_V54 = [
     [1248, 832], [1024, 1024], [896, 1184], [832, 1248],
     [1376, 768], [1184, 896], [928, 1120], [864, 1216],
     [1216, 864], [1312, 800], [768, 1376], [1280, 832],
     [1152, 896], [1344, 768], [1120, 928], [1408, 736], [1440, 736]
 ]
+
 TARGET_BUCKETS_V765 = [
     [1248, 832], [1024, 1024], [896, 1152], [1248, 832], [960, 1088], 
     [1088, 960], [1152, 896], [832, 1248], [832, 1248], [1312, 800], 
@@ -60,15 +61,16 @@ TARGET_BUCKETS_V765 = [
     [1472, 704], [704, 1472], [1600, 672], [672, 1568], [1184, 896]
 ]
 
-# --- Helper Functions ---
-
+# ==========================================
+# Helper Functions
+# ==========================================
 def calculate_shift(
-    image_seq_len,
+    image_seq_len: int,
     base_seq_len: int = 256,
     max_seq_len: int = 4096,
     base_shift: float = 0.5,
     max_shift: float = 1.16,
-):
+) -> float:
     m = (max_shift - base_shift) / (max_seq_len - base_seq_len)
     b = base_shift - m * base_seq_len
     mu = image_seq_len * m + b
@@ -97,14 +99,16 @@ def retrieve_timesteps(
         timesteps = scheduler.timesteps
     return timesteps, num_inference_steps
 
-def _get_closest_bucket(buckets, w, h):
+def _get_closest_bucket(buckets: List[List[int]], w: int, h: int) -> Tuple[int, int]:
     target_ar = w / h
     best_bucket = min(buckets, key=lambda b: abs((b[0]/b[1]) - target_ar))
     best_bucket = [int(x * 2) for x in best_bucket]
     return tuple(best_bucket)
 
 
-# --- Pipeline Class ---
+# ==========================================
+# Pipeline Class
+# ==========================================
 class DreamLitePipeline(
     DiffusionPipeline,
     FluxLoraLoaderMixin,
@@ -114,11 +118,11 @@ class DreamLitePipeline(
 ):
     def __init__(
         self,
-        text_encoder: AutoModelForCausalLM,
+        text_encoder: Qwen3VLForConditionalGeneration,
         tokenizer: AutoTokenizer,
-        processor: AutoProcessor,
-        vae: AutoencoderKL,
-        unet: UNet2DConditionModel,
+        processor: Qwen3VLProcessor,
+        vae: AutoencoderTiny,
+        unet: DreamLiteUNetModel,
         scheduler: FlowMatchEulerDiscreteScheduler,
     ):
         super().__init__()
@@ -130,14 +134,19 @@ class DreamLitePipeline(
             unet=unet,
             scheduler=scheduler,
         )
-        # 优化：直接使用 self.vae.config 而不是 getattr
-        self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        
+        # 安全计算 VAE scale factor，避免读取非标准配置报错，默认通常为 8 (2^3)
+        if hasattr(self.vae.config, "encoder_block_out_channels"):
+            self.vae_scale_factor = 2 ** (len(self.vae.config.encoder_block_out_channels) - 1)
+        else:
+            self.vae_scale_factor = 8
+            
         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor * 2)
         self.default_sample_size = 128
 
     @staticmethod
-    def _extract_masked_hidden(hidden_states: torch.Tensor, mask: torch.Tensor):
-        """静态方法：根据 mask 提取有效的 hidden states"""
+    def _extract_masked_hidden(hidden_states: torch.Tensor, mask: torch.Tensor) -> List[torch.Tensor]:
+        """Extract valid hidden states based on attention mask."""
         bool_mask = mask.bool()
         valid_lengths = bool_mask.sum(dim=1)
         selected = hidden_states[bool_mask]
@@ -150,20 +159,25 @@ class DreamLitePipeline(
         prompts: List[str],
         device: torch.device,
         dtype: torch.dtype,
-        image: Optional[torch.Tensor] = None,
+        image: Optional[Image.Image] = None,
         max_sequence_length: int = 500,
         text_pad_embedding: Optional[torch.Tensor] = None,
     ):
-        # mode = 'generate'  # drop the image token
         if mode == "edit":
             drop_idx = 64 
-            template = "<|im_start|>system\nDescribe the key features of the input image (color, shape, size, texture, objects, background), then explain how the user's text instruction should alter or modify the image. Generate a new image that meets the user's requirements while maintaining consistency with the original input where appropriate.<|im_end|>\n<|im_start|>user\n<|vision_start|><|image_pad|><|vision_end|>{}<|im_end|>\n<|im_start|>assistant\n"
+            template = (
+                "<|im_start|>system\nDescribe the key features of the input image (color, shape, size, "
+                "texture, objects, background), then explain how the user's text instruction should alter "
+                "or modify the image. Generate a new image that meets the user's requirements while maintaining "
+                "consistency with the original input where appropriate.<|im_end|>\n<|im_start|>user\n"
+                "<|vision_start|><|image_pad|><|vision_end|>{}<|im_end|>\n<|im_start|>assistant\n"
+            )
             
             txts = [template.format(p) for p in prompts]
             images = [image.resize((512, 512), Image.Resampling.LANCZOS)] * len(prompts)
             
             tk_out = self.processor(
-                text=txts, images=images, padding=True, return_tensors="pt",
+                text=txts, images=images, padding=True, return_tensors="pt"
             ).to(device)
 
             outputs = self.text_encoder(
@@ -173,13 +187,18 @@ class DreamLitePipeline(
                 image_grid_thw=tk_out.image_grid_thw,
                 output_hidden_states=True
             )
+            
         elif mode == 'generate':
             drop_idx = 34
-            template = "<|im_start|>system\nDescribe the image by detailing the color, shape, size, texture, quantity, text, spatial relationships of the objects and background:<|im_end|>\n<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n"
+            template = (
+                "<|im_start|>system\nDescribe the image by detailing the color, shape, size, texture, "
+                "quantity, text, spatial relationships of the objects and background:<|im_end|>\n"
+                "<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n"
+            )
             
             txts = [template.format(p) for p in prompts]
             tk_out = self.tokenizer(
-                text=txts, padding=True, return_tensors="pt",
+                text=txts, padding=True, return_tensors="pt"
             ).to(device)
 
             outputs = self.text_encoder(
@@ -187,7 +206,6 @@ class DreamLitePipeline(
                 attention_mask=tk_out.attention_mask,
                 output_hidden_states=True,
             )
-
         else:
             raise ValueError(f"Unknown mode: {mode}")
 
@@ -202,32 +220,30 @@ class DreamLitePipeline(
         for i, seq in enumerate(split_hidden_states):
             prompt_embeds_mask[i, :seq.shape[0]] = 1
         
+        # Apply text_pad_embedding if provided
         if text_pad_embedding is not None:
-            # 确保维度匹配 [1, 1, D] 以便广播
             pad_emb = text_pad_embedding.to(dtype=dtype, device=device)
             if pad_emb.ndim == 1:
                 pad_emb = pad_emb.unsqueeze(0).unsqueeze(0)
             elif pad_emb.ndim == 2:
                 pad_emb = pad_emb.unsqueeze(0)
             
-            # Mask 扩展: [B, L, 1]
             mask_expanded = prompt_embeds_mask.unsqueeze(-1).to(dtype=dtype)
-            # 融合：Mask位置保留原值，非Mask位置使用 pad_emb
             prompt_embeds = prompt_embeds * mask_expanded + pad_emb * (1 - mask_expanded)
 
         return prompt_embeds, prompt_embeds_mask
 
     def prepare_latents(
         self,
-        batch_size,
-        num_channels_latents,
-        height,
-        width,
-        dtype,
-        device,
-        generator,
-        latents=None,
-    ):
+        batch_size: int,
+        num_channels_latents: int,
+        height: int,
+        width: int,
+        dtype: torch.dtype,
+        device: torch.device,
+        generator: Optional[torch.Generator],
+        latents: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         height = int(height) // self.vae_scale_factor
         width = int(width) // self.vae_scale_factor
         shape = (batch_size, num_channels_latents, height, width)
@@ -242,13 +258,16 @@ class DreamLitePipeline(
         return latents
 
     def prepare_image_latents(
-            self, image, dtype, device, generator=None
-    ):
+        self, 
+        image: Union[torch.Tensor, Image.Image, List[Image.Image]], 
+        dtype: torch.dtype, 
+        device: torch.device, 
+        generator: Optional[torch.Generator] = None
+    ) -> torch.Tensor:
         if not isinstance(image, (torch.Tensor, Image.Image, list)):
-            raise ValueError(f"`image` has to be of type `torch.Tensor`, `PIL.Image.Image` or list but is {type(image)}")
+            raise ValueError(f"`image` must be of type `torch.Tensor`, `PIL.Image.Image` or `list`, got {type(image)}")
 
         image = image.to(device=device, dtype=dtype)
-        batch_size = 1
 
         if image.shape[1] == 4:
             image_latents = image
@@ -277,20 +296,20 @@ class DreamLitePipeline(
         text_pad_embedding: Optional[torch.Tensor] = None,
         bucket: int = 0,
     ):
-        # 1. Init Locals
+        # 1. Init pipeline parameters
         height = height or self.default_sample_size * self.vae_scale_factor
         width = width or self.default_sample_size * self.vae_scale_factor
         self._guidance_scale = guidance_scale
         self._image_guidance_scale = image_guidance_scale
+        
         task = "generate" if image is None else "edit"
         device = self._execution_device
         dtype = self.text_encoder.dtype
-        batch_size = 1 # 强制 batch=1
-        if negative_prompt is None:
-            negative_prompt = ""
+        batch_size = 1  # Note: Currently forced to batch_size 1 for this pipeline
+        negative_prompt = negative_prompt or ""
         
-        # 使用局部变量 sigmas
-        sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps) if sigmas is None else sigmas
+        if sigmas is None:
+            sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
 
         # 2. Prepare Dimensions (Buckets)
         if bucket == 1:
@@ -337,26 +356,22 @@ class DreamLitePipeline(
         num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
 
         # 6. Prepare Conditions (Text & Image)
-        if task == 'generate':
-            # === Generate Mode ===
-            prompt = "[Generate]: " + prompt
+        if task == "generate":
+            prompt_str = f"[Generate]: {prompt}"
             prompt_embeds, text_attention_mask = self.encode_prompt(
                 mode="generate", 
-                prompts=[negative_prompt, prompt], 
+                prompts=[negative_prompt, prompt_str], 
                 device=device,
                 dtype=dtype,
                 text_pad_embedding=text_pad_embedding,
             )
             image_latents = torch.zeros_like(latents)
-            # image_processed = self.image_processor.preprocess(Image.new("RGB", (width, height), (0, 0, 0)))
-            # _, image_latents = self.prepare_image_latents(image_processed, batch_size=1, num_images_per_prompt=1, dtype=dtype, device=device,)
             
         else: 
-            # === Edit Mode ===
-            prompt = "[Edit]: A diptych with two side-by-side images of the same scene. Compared to the right side, the left one has " + prompt
+            prompt_str = f"[Edit]: A diptych with two side-by-side images of the same scene. Compared to the right side, the left one has {prompt}"
             prompt_embeds, text_attention_mask = self.encode_prompt(
                 mode="edit",
-                prompts=[negative_prompt, negative_prompt, prompt],
+                prompts=[negative_prompt, negative_prompt, prompt_str],
                 image=image,
                 device=device,
                 dtype=dtype,
@@ -373,7 +388,7 @@ class DreamLitePipeline(
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 
-                # === Construct Batch Input ===
+                # Expand latents for classifier-free guidance
                 if task == "generate":
                     latents_in = torch.cat([latents] * 2)
                     cond_img_in = torch.cat([image_latents] * 2)
@@ -386,7 +401,7 @@ class DreamLitePipeline(
                     model_input = torch.cat([latents_in, cond_img_in], dim=3) 
                     time_ids_in = torch.cat([add_time_ids] * 3)
 
-                # === UNet Forward ===
+                # UNet Forward
                 noise_pred = self.unet(
                     model_input,
                     timestep=t.expand(model_input.shape[0]).to(latents.dtype),
@@ -396,7 +411,7 @@ class DreamLitePipeline(
                     return_dict=False, 
                 )[0]
 
-                # === Classifier-Free Guidance ===
+                # Classifier-Free Guidance
                 noise_pred = noise_pred[..., :latents.shape[-1]]
                 if task == "generate":
                     noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
@@ -406,10 +421,8 @@ class DreamLitePipeline(
                     noise_pred = noise_pred_uncond + \
                         self._guidance_scale * (noise_pred_text - noise_pred_image) + \
                         self._image_guidance_scale * (noise_pred_image - noise_pred_uncond)
-                else:
-                    raise ValueError("Invalid task type")
 
-                # === Scheduler Step ===
+                # Scheduler Step
                 latents_dtype = latents.dtype
                 latents = self.scheduler.step(noise_pred, t, latents, return_dict=False)[0]
 
@@ -425,16 +438,16 @@ class DreamLitePipeline(
 
         # 8. Decode Latents
         if output_type == "latent":
-            image = latents
+            image_out = latents
         else:
             shift_factor = getattr(self.vae.config, "shift_factor", 0.0)
             latents = (latents / self.vae.config.scaling_factor) + shift_factor
-            image = self.vae.decode(latents, return_dict=False)[0]
-            image = self.image_processor.postprocess(image, output_type=output_type)
+            image_out = self.vae.decode(latents, return_dict=False)[0]
+            image_out = self.image_processor.postprocess(image_out, output_type=output_type)
 
         self.maybe_free_model_hooks()
 
         if not return_dict:
-            return (image,)
+            return (image_out,)
 
-        return FluxPipelineOutput(images=image)
+        return FluxPipelineOutput(images=image_out)
