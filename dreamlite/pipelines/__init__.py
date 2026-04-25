@@ -1,1 +1,1 @@
-from .dreamlite import DreamLitePipeline, DreamLiteMobilePipeline
+from .dreamlite import DreamLitePipeline, DreamLiteMobilePipeline, DreamLitePipelineLoRA

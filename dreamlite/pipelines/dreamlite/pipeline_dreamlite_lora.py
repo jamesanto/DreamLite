@@ -23,7 +23,7 @@ from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img impo
 from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import (
     FluxIPAdapterMixin, 
-    FluxLoraLoaderMixin, 
+    LoraLoaderMixin, 
     FromSingleFileMixin, 
     TextualInversionLoaderMixin
 )
@@ -109,9 +109,9 @@ def _get_closest_bucket(buckets: List[List[int]], w: int, h: int) -> Tuple[int, 
 # ==========================================
 # Pipeline Class
 # ==========================================
-class DreamLitePipeline(
+class DreamLitePipelineLoRA(
     DiffusionPipeline,
-    FluxLoraLoaderMixin,
+    LoraLoaderMixin,
     FromSingleFileMixin,
     TextualInversionLoaderMixin,
     FluxIPAdapterMixin,
@@ -296,6 +296,7 @@ class DreamLitePipeline(
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
         bucket: int = 0,
+        cross_attention_kwargs: Optional[Dict[str, Any]] = None,
     ):
         # 1. Init pipeline parameters
         height = height or self.default_sample_size * self.vae_scale_factor
@@ -409,6 +410,7 @@ class DreamLitePipeline(
                     encoder_hidden_states=prompt_embeds,
                     encoder_attention_mask=text_attention_mask,
                     added_cond_kwargs={"time_ids": time_ids_in},
+                    cross_attention_kwargs=cross_attention_kwargs,
                     return_dict=False, 
                 )[0]
 
