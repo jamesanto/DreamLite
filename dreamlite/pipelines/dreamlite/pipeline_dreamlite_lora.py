@@ -14,7 +14,7 @@
 
 import torch
 import numpy as np
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Dict, Any
 from PIL import Image
 from torch.nn.utils.rnn import pad_sequence
 

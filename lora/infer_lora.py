@@ -13,21 +13,22 @@
 # limitations under the License.
 
 import torch
-from dreamlite import DreamLitePipeline
+from safetensors.torch import load_file
+from dreamlite import DreamLitePipelineLoRA
+from peft import PeftModel
 
-pipe = DreamLitePipeline.from_pretrained("models/DreamLite-base", torch_dtype=torch.bfloat16).to("cuda")
+pipe = DreamLitePipelineLoRA.from_pretrained("models/DreamLite-base", torch_dtype=torch.bfloat16).to("cuda")
 
 # 1. Load LoRA Weights
-lora_path = "models/lora/anime_style.safetensors"
-pipe.load_lora_weights(lora_path, adapter_name="anime")
+lora_path = "output/output_lora/yarn"
 
-# 2. Set LoRA Scale
-pipe.set_adapters(["anime"], adapter_weights=[0.8])
+print(f"Injecting LoRA weights from {lora_path}...")
+pipe.unet = PeftModel.from_pretrained(pipe.unet, lora_path)
 
 # 3. Inference
 image = pipe(
-    prompt="A girl in the forest", 
+    prompt="A girl in the forest, yarn art style", 
     num_inference_steps=28
 ).images[0]
 
-image.save("lora_output.png")
+image.save("2_output.png")

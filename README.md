@@ -139,8 +139,11 @@ python app.py
 
 
 
-<!-- ## 🤗 Checkpoints
+## 🤗 Checkpoints
 We provide two variants of the DreamLite model to balance visual quality and on-device inference speed.
+
+[!NOTE]
+Model weights are currently under safety review. To request access, please contact us at 📧 klfeng1206@outlook.com
 <table>
 <tr>
 <th align="left">Model Variant</th>
@@ -148,7 +151,7 @@ We provide two variants of the DreamLite model to balance visual quality and on-
 <th align="center">Resolution</th>
 <th align="center">Steps</th>
 <th align="center">Guidance</th>
-<th align="center">Hugging Face Hub</th>
+<!-- <th align="center">Hugging Face Hub</th> -->
 </tr>
 <tr>
 <td><strong>DreamLite (Base)</strong></td>
@@ -156,7 +159,7 @@ We provide two variants of the DreamLite model to balance visual quality and on-
 <td align="center">1024×1024</td>
 <td align="center">28</td>
 <td align="left">CFG & IMG_CFG</td>
-<td align="center"><a href="https://huggingface.co/ByteVisionLab/DreamLite-base">🤗 Download</a></td>
+<!-- <td align="center"><a href="https://huggingface.co/ByteVisionLab/DreamLite-base">🤗 Download</a></td> -->
 </tr>
 <tr>
 <td><strong>DreamLite (Mobile)</strong></td>
@@ -164,9 +167,9 @@ We provide two variants of the DreamLite model to balance visual quality and on-
 <td align="center">1024×1024</td>
 <td align="center">4</td>
 <td align="left">No CFG</td>
-<td align="center"><a href="https://huggingface.co/ByteVisionLab/DreamLite-mobile">🤗 Download</a></td>
+<!-- <td align="center"><a href="https://huggingface.co/ByteVisionLab/DreamLite-mobile">🤗 Download</a></td> -->
 </tr>
-</table> -->
+</table>
 
 ## 📊 Main Results
 
@@ -287,12 +290,41 @@ Quantitative comparison with state-of-the-art methods on generation and editing 
   </tr>
 </table>
 
+## 🎛️ LoRA Fine-tuning
+We also provide LoRA training and inference support for DreamLite, enabling lightweight customization on your own data.
+
+<table>
+<tr>
+<th align="left">Script</th>
+<th align="left">Path</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>Training</td>
+<td align="left">lora/train_lora.py</td>
+<td align="left">LoRA fine-tuning script</td>
+</tr>
+<tr>
+<td>Inference</td>
+<td align="left">lora/infer_lora.py</td>
+<td align="left">Inference with trained LoRA weights</td>
+
+</tr>
+</table>
+
+[!NOTE]
+You will need to modify the data loading section in train_lora.py to adapt to your own dataset format.
+Below is a sample result from a LoRA fine-tuned DreamLite model:
+<div align='center'>
+<img src="./assets/lora.png" class="interpolation-image" alt="LoRA fine-tuning example. The left image is the original image, and the right image is the fine-tuned image with yarn art style LoRA." width="80%" />
+</div>
 
 ## 📑 Open-Source Plan
 - [X] Release paper on arXiv
 - [X] Release inference code
+- [X] Release LoRA training
 - [ ] Release model weights on HuggingFace
-- [ ] Release online demo
+- [X] Release online demo
 - [ ] On-device Deployment Reference
 
 

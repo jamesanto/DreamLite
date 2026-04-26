@@ -20,22 +20,24 @@ from tqdm import tqdm
 from PIL import Image
 
 from torch.utils.data import DataLoader, Dataset 
+from datasets import load_dataset
+from torchvision import transforms
 
 from accelerate import Accelerator
 from diffusers.optimization import get_scheduler
 from peft import LoraConfig, get_peft_model
 
 # 导入你的核心组件
-from dreamlite import DreamLitePipeline
+from dreamlite import DreamLitePipelineLoRA
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train LoRA for DreamLite")
     parser.add_argument("--model_id", type=str, default="models/DreamLite-base")
-    parser.add_argument("--output_dir", type=str, default="./output/output_lora")
+    parser.add_argument("--output_dir", type=str, default="./output/output_lora/yarn")
     parser.add_argument("--rank", type=int, default=16, help="LoRA Rank")
-    parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--learning_rate", type=float, default=5e-5)
     parser.add_argument("--train_batch_size", type=int, default=1)
-    parser.add_argument("--max_train_steps", type=int, default=1000)
+    parser.add_argument("--max_train_steps", type=int, default=2500)
     # parser.add_argument("--dataset_path", type=str, required=True)
     return parser.parse_args()
 
@@ -50,7 +52,7 @@ def main():
     )
     
     # 2. Load DreamLite Pipeline
-    pipe = DreamLitePipeline.from_pretrained(args.model_id, torch_dtype=torch.bfloat16)
+    pipe = DreamLitePipelineLoRA.from_pretrained(args.model_id, torch_dtype=torch.bfloat16)
     
     text_encoder = pipe.text_encoder
     vae = pipe.vae
@@ -90,7 +92,36 @@ def main():
     # TODO: finish DataLoader
     # dataset = MyDataset(args.dataset_path, ...)
     # dataloader = DataLoader(dataset, batch_size=args.train_batch_size, shuffle=True)
+    print("Loading dataset...")
+    dataset = load_dataset("Norod78/Yarn-art-style")
+    train_dataset = dataset["train"]
 
+    image_transforms = transforms.Compose([
+        transforms.Resize(1024, interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.CenterCrop(1024),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5]), # Normalize
+    ])
+
+    def preprocess_train(examples):
+        images = [image.convert("RGB") for image in examples["image"]]
+        examples["pixel_values"] = [image_transforms(image) for image in images]
+        examples["prompt"] = examples["text"]
+        return examples
+
+    train_dataset.set_transform(preprocess_train)
+
+    def collate_fn(examples):
+        pixel_values = torch.stack([example["pixel_values"] for example in examples])
+        prompts = [example["prompt"] for example in examples]
+        return {"pixel_values": pixel_values, "prompts": prompts}
+
+    dataloader = torch.utils.data.DataLoader(
+        train_dataset,
+        shuffle=True,
+        collate_fn=collate_fn,
+        batch_size=args.train_batch_size,
+    )
     # =======================================================
 
     # 6. Accelerator
@@ -100,7 +131,7 @@ def main():
     vae.to(accelerator.device, dtype=torch.bfloat16)
     text_encoder.to(accelerator.device, dtype=torch.bfloat16)
 
-    # 7. 开始训练
+    # 7. Train
     global_step = 0
     progress_bar = tqdm(total=args.max_train_steps, disable=not accelerator.is_local_main_process)
     
@@ -112,66 +143,73 @@ def main():
         # for batch in dataloader:
         #     images = batch["pixel_values"]
         #     prompts = batch["text"]
+        for batch in dataloader:
+            if global_step >= args.max_train_steps:
+                break
+            images = batch['pixel_values'].to(accelerator.device, dtype=torch.bfloat16)
+            prompts = batch['prompts']
         # =======================================================
-        
-        with accelerator.accumulate(unet):
-            # 1. encode Latents (Ground Truth x_0)
-            latents = vae.encode(images).latents
-            latents = latents * vae.config.scaling_factor
 
-            # 2. noise and timestep
-            noise = torch.randn_like(latents)
-            bsz = latents.shape[0]
-            timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
-            timesteps = timesteps.long()
+            with accelerator.accumulate(unet):
+                # 1. encode Latents (Ground Truth x_0)
+                latents = vae.encode(images).latents
+                latents = latents * vae.config.scaling_factor
 
-            # 3. Add noise to Latents
-            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+                # 2. noise and timestep
+                noise = torch.randn_like(latents)
+                bsz = latents.shape[0]
+                sigmas = torch.rand((bsz,), dtype=latents.dtype, device=latents.device)
+                sigmas_expanded = sigmas.view(bsz, 1, 1, 1)
 
-            # 4. Encode Prompt
-            prompt_embeds, text_attention_mask = pipe.encode_prompt(
-                mode="generate",
-                prompts=prompts,
-                device=accelerator.device,
-                dtype=torch.bfloat16,
-            )
+                timesteps = (sigmas * 1000.0).long() 
 
-            # 5. Time IDs, Image Latents
-            # Generate mode, condition image = 0
-            cond_img_in = torch.zeros_like(noisy_latents)
-            model_input = torch.cat([noisy_latents, cond_img_in], dim=3) # In-context Concat
-            
-            add_time_ids = torch.tensor([[1024, 1024]], dtype=torch.bfloat16, device=accelerator.device).repeat(bsz, 1)
+                # 3. Add noise to Latents
+                noisy_latents = (1.0 - sigmas_expanded) * latents + sigmas_expanded * noise
 
-            # 6. UNet Predict Noise
-            noise_pred = unet(
-                model_input,
-                timesteps,
-                encoder_hidden_states=prompt_embeds,
-                encoder_attention_mask=text_attention_mask,
-                added_cond_kwargs={"time_ids": add_time_ids},
-                return_dict=False,
-            )[0]
-            
-            noise_pred = noise_pred[..., :latents.shape[-1]]
+                # 4. Encode Prompt
+                prompt_embeds, text_attention_mask = pipe.encode_prompt(
+                    mode="generate",
+                    prompts=prompts,
+                    device=accelerator.device,
+                    dtype=torch.bfloat16,
+                )
 
-            # 7. Loss (Flow Matching, MSE)
-            target = noise 
-            loss = F.mse_loss(noise_pred.float(), target.float(), reduction="mean")
+                # 5. Time IDs, Image Latents
+                # Generate mode, condition image = 0
+                cond_img_in = torch.zeros_like(noisy_latents)
+                model_input = torch.cat([noisy_latents, cond_img_in], dim=3) # In-context Concat
+                
+                add_time_ids = torch.tensor([[1024, 1024]], dtype=torch.bfloat16, device=accelerator.device).repeat(bsz, 1)
 
-            # 8. backward and update params
-            accelerator.backward(loss)
+                # 6. UNet Predict Noise
+                noise_pred = unet(
+                    model_input,
+                    timesteps,
+                    encoder_hidden_states=prompt_embeds,
+                    encoder_attention_mask=text_attention_mask,
+                    added_cond_kwargs={"time_ids": add_time_ids},
+                    return_dict=False,
+                )[0]
+                
+                noise_pred = noise_pred[..., :latents.shape[-1]]
+
+                # 7. Loss (Flow Matching, MSE)
+                target = noise - latents
+                loss = F.mse_loss(noise_pred.float(), target.float(), reduction="mean")
+
+                # 8. backward and update params
+                accelerator.backward(loss)
+                if accelerator.sync_gradients:
+                    accelerator.clip_grad_norm_(filter(lambda p: p.requires_grad, unet.parameters()), 1.0)
+                
+                optimizer.step()
+                optimizer.zero_grad()
+
+            # update
             if accelerator.sync_gradients:
-                accelerator.clip_grad_norm_(filter(lambda p: p.requires_grad, unet.parameters()), 1.0)
-            
-            optimizer.step()
-            optimizer.zero_grad()
-
-        # update
-        if accelerator.sync_gradients:
-            progress_bar.update(1)
-            global_step += 1
-            progress_bar.set_postfix({"loss": loss.item()})
+                progress_bar.update(1)
+                global_step += 1
+                progress_bar.set_postfix({"loss": loss.item()})
 
     accelerator.wait_for_everyone()
     
