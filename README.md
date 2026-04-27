@@ -4,6 +4,7 @@
 
 
 <!-- [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Weights-DreamLite-yellow)](https://huggingface.co/ByteVisionLab/DreamLite)&nbsp; -->
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/carlofkl/DreamLite)
 [![Paper](https://img.shields.io/badge/Paper-DreamLite-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2603.28713)&nbsp;
 [![Project Page](https://img.shields.io/badge/Project_page-More_visualizations-green?logo=bytedance)](https://carlofkl.github.io/dreamlite/)&nbsp;
 [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=carlofkl.DreamLite)](https://github.com/ByteVisionLab/DreamLite)
@@ -82,8 +83,16 @@ conda activate dreamlite
 pip install -r requirements.txt
 ```
 
+Ensure the model weights (DreamLite-base and DreamLite-mobile) are placed in the following directory structure:
+```
+DreamLite/
+├── models/
+│   ├── DreamLite-base/
+│   └── DreamLite-mobile/
+```
+
 ### 2. Inference via CLI
-You can easily generate or edit images using the provided command-line interfaces.
+You can readily generate or edit images utilizing our provided command-line interfaces.
 ```bash
 # ==========================================
 # DreamLite-base: 28 Steps (High Fidelity)
@@ -104,7 +113,15 @@ python infer_mobile.py --prompt "A portrait of a young woman with flowers."
 python infer_mobile.py --prompt "Change the background to a dense forest." --image_path ./inputs/source.png
 ```
 
-<!-- ### 3. Inference via Python API
+### 3. Benchmark Evaluation
+We provide comprehensive benchmark evaluation scripts (GenEval & ImgEdit) to facilitate performance comparisons between DreamLite and other state-of-the-art models. Please configure your local dataset paths within `tools/benchmark/infer_geneval.py` and `tools/benchmark/infer_imgedit.py` prior to execution.
+```bash
+# Run the benchmark evaluation
+python tools/benchmark/infer_geneval.py
+python tools/benchmark/infer_imgedit.py
+```
+
+<!-- ### 4. Inference via Python API (diffusers)
 DreamLite is designed to be compatible with standard diffusers pipelines.
 ```python
 import torch
@@ -125,11 +142,11 @@ edit_img = pipe(prompt="Make the sky more dramatic with orange clouds", image=so
 edit_img.save("output_edit.png")
 ``` -->
 
-### 3. Interactive Gradio Demo
+### 4. Interactive Gradio Demo
 
 We provide a user-friendly web interface powered by Gradio. You can try our live demo on Hugging Face Spaces, or deploy it locally on your own machine (GPU/CPU).
 
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](xxx)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/carlofkl/DreamLite)
 
 To run the interactive demo locally:
 ```bash
@@ -140,10 +157,13 @@ python app.py
 
 
 ## 🤗 Checkpoints
-We provide two variants of the DreamLite model to balance visual quality and on-device inference speed.
+We offer two distinct variants of the DreamLite model to provide an optimal balance between visual fidelity and on-device inference latency.
 
 [!NOTE]
-Model weights are currently under safety review. To request access, please contact us at 📧 klfeng1206@outlook.com
+
+Model weights are currently undergoing safety review. To request early access, please contact us at 📧 klfeng1206@outlook.com
+
+
 <table>
 <tr>
 <th align="left">Model Variant</th>
@@ -291,33 +311,9 @@ Quantitative comparison with state-of-the-art methods on generation and editing 
 </table>
 
 ## 🎛️ LoRA Fine-tuning
-We also provide LoRA training and inference support for DreamLite, enabling lightweight customization on your own data.
+We provide comprehensive support for LoRA fine-tuning and inference, enabling lightweight customization of DreamLite on your own domain-specific datasets.
 
-<table>
-<tr>
-<th align="left">Script</th>
-<th align="left">Path</th>
-<th align="left">Description</th>
-</tr>
-<tr>
-<td>Training</td>
-<td align="left">lora/train_lora.py</td>
-<td align="left">LoRA fine-tuning script</td>
-</tr>
-<tr>
-<td>Inference</td>
-<td align="left">lora/infer_lora.py</td>
-<td align="left">Inference with trained LoRA weights</td>
-
-</tr>
-</table>
-
-[!NOTE]
-You will need to modify the data loading section in train_lora.py to adapt to your own dataset format.
-Below is a sample result from a LoRA fine-tuned DreamLite model:
-<div align='center'>
-<img src="./assets/lora.png" class="interpolation-image" alt="LoRA fine-tuning example. The left image is the original image, and the right image is the fine-tuned image with yarn art style LoRA." width="80%" />
-</div>
+For detailed instructions, training scripts, and examples, please refer to our dedicated **[LoRA Fine-Tuning Guide](lora/README.md)**.
 
 ## 📑 Open-Source Plan
 - [X] Release paper on arXiv
