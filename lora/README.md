@@ -3,7 +3,7 @@
 This document provides instructions for training and performing inference with Low-Rank Adaptation (LoRA) on the DreamLite model. LoRA allows you to efficiently fine-tune DreamLite for specific artistic styles, subjects, or domains with minimal computational overhead.
 
 <div align='center'>
-<img src="assets/lora.png" class="interpolation-image" alt="LoRA fine-tuning example. The left image is the original image, and the right images are the fine-tuned images with yarn art style / 3D Chibi Style and LoRA." width="100%" />
+<img src="../assets/lora.png" class="interpolation-image" alt="LoRA fine-tuning example. The left image is the original image, and the right images are the fine-tuned images with yarn art style LoRA." width="100%" />
 </div>
 
 ## 📁 Repository Structure
