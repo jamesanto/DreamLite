@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument("--output_dir", type=str, default="./output/output_lora/edit_Snoopy")
     parser.add_argument("--rank", type=int, default=16, help="LoRA Rank")
     parser.add_argument("--learning_rate", type=float, default=5e-5)
-    parser.add_argument("--train_batch_size", type=int, default=1)
+    parser.add_argument("--train_batch_size", type=int, default=1, help="Batch size only can be 1 here.")
     parser.add_argument("--max_train_steps", type=int, default=3500)
     parser.add_argument("--default_prompt", type=str, default="transfer the image into Snoopy style")
     # parser.add_argument("--dataset_path", type=str, required=True)

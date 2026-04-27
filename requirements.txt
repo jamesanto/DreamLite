@@ -7,7 +7,7 @@ diffusers
 accelerate
 gradio
 safetensors
-dataset
+datasets
 peft
 tqdm
 einops

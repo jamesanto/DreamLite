@@ -25,7 +25,7 @@ The necessary scripts for LoRA customization are located within this directory:
 For standard generation LoRA (e.g., [Yarn-art-style](https://huggingface.co/datasets/Norod78/Yarn-art-style)), DreamLite acts as a standard diffusion model. The condition image latent `cond_img_in` is replaced with zeros.
 
 ```bash
-python train_gen_lora.py \
+python lora/train_gen_lora.py \
     --model_id "ByteVisionLab/DreamLite-base" \
     --output_dir "./output_lora/yarn" \
     --max_train_steps 2500 \
@@ -37,7 +37,7 @@ python train_gen_lora.py \
 For image editing LoRA (e.g., [Snoopy-style](https://huggingface.co/datasets/showlab/OmniConsistency/viewer/default/Snoopy)), DreamLite utilizes in-context spatial concatenation. This means the model requires both the noisy target latents and the encoded source condition latents.
 
 ```bash
-python train_edit_lora.py \
+python lora/train_edit_lora.py \
     --model_id "ByteVisionLab/DreamLite-base" \
     --output_dir "./output_lora/edit_Snoopy" \
     --max_train_steps 3500 \

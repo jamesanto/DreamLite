@@ -313,15 +313,18 @@ class DreamLitePipeline(
             sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
 
         # 2. Prepare Dimensions (Buckets)
-        if bucket == 1:
-            height = width = 2048
-        elif bucket == 54:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
-        elif bucket == 765:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
-        else:
-            height = width = 1024
-
+        if image is not None:  # edit task, resize to certain bucket
+            if bucket == 0 :
+                height = width = 1024
+            elif bucket == 1:
+                height = width = 2048
+            elif bucket == 54:
+                height, width = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
+            elif bucket == 765:
+                height, width = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
+            else:
+                height, width = height, width
+                
         # 3. Prepare Time IDs
         original_size = (width, height)
         add_time_ids = torch.tensor([list(original_size)], device=device, dtype=dtype)
@@ -436,7 +439,7 @@ class DreamLitePipeline(
 
                 if XLA_AVAILABLE:
                     xm.mark_step()
-
+        print(latents.shape)
         # 8. Decode Latents
         if output_type == "latent":
             image_out = latents

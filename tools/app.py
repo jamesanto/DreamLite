@@ -163,7 +163,7 @@ with gr.Blocks(title="DreamLite Demo") as demo:
     gr.Examples(
         examples=[
             ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, 28, 7.5, 1.0, 42],
-            ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.jpg", 4, 1.0, 1.0, 42] 
+            ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.png", 4, 1.0, 1.0, 42] 
         ],
         inputs=[model_dropdown, prompt_input, image_input, steps_slider, guidance_slider, img_guidance_slider, seed_slider]
     )
