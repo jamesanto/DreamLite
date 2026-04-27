@@ -151,7 +151,7 @@ We provide a user-friendly web interface powered by Gradio. You can try our live
 To run the interactive demo locally:
 ```bash
 # Launch the local web server
-python app.py
+python tools/app.py
 ```
 
 
