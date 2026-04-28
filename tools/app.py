@@ -129,7 +129,7 @@ def generate_image(
         width, height = parse_resolution(resolution)
     else:
         # Mobile 版本固定 1024x1024
-        width, height = 1024, 1024
+        width, height = parse_resolution(resolution)
     
     if input_image is not None: width, height = input_image.size
     
@@ -167,7 +167,7 @@ def on_model_change(model_choice):
         )
     else:
         return (
-            gr.update(visible=False),                              # 分辨率选择隐藏
+            gr.update(visible=True, value="1024 × 1024 (1:1)"),    # 分辨率选择可见
             gr.update(value=4),                                    # 默认 4 步
             gr.update(value=1.0),                                  # guidance scale
         )
@@ -232,7 +232,7 @@ with gr.Blocks(title="DreamLite Demo") as demo:
     gr.Examples(
         examples=[
             ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, "832 × 1216 (2:3)", 28, 3.5, 1.0, 123],
-            ["DreamLite-mobile", "A portrait of a young woman with flowers.", None, "1024 × 1024 (1:1)", 28, 3.5, 1.0, 123],
+            ["DreamLite-mobile", "A portrait of a young woman with flowers.", None, "1024 × 1024 (1:1)", 4, 3.5, 1.0, 42],
             ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.png", "1024 × 1024 (1:1)", 4, 1.0, 1.0, 42],
         ],
         inputs=[model_dropdown, prompt_input, image_input, resolution_dropdown, steps_slider, guidance_slider, img_guidance_slider, seed_slider]

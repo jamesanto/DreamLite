@@ -279,6 +279,8 @@ class DreamLiteMobilePipeline(
         device = self._execution_device
         dtype = self.text_encoder.dtype
         batch_size = 1  # Note: Currently forced to batch_size 1
+
+        if input_image is not None: width = height = 1024
         
         if sigmas is None:
             sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
