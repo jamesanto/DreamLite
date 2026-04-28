@@ -159,7 +159,7 @@ def main():
         train_dataset,
         shuffle=True,
         collate_fn=collate_fn,
-        batch_size=args.train_batch_size,
+        batch_size=1,
     )
 
     # =======================================================

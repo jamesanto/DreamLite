@@ -75,13 +75,13 @@ class ImgEditBenchDataset(Dataset):
         return sample
 
 
-def load_dataloader(img_size):
+def load_dataloader(img_size, json_path, img_root):
     def collate_single(batch):
         return batch[0]
 
     imgedit_ds = ImgEditBenchDataset(
-        json_path="YOUR_IMGEDIT_PATH/ImgEdit/Benchmark/Basic/basic_edit.json",
-        img_root="YOUR_IMGEDIT_IMAGES_PATH/ImgEdit/Benchmark/singleturn",
+        json_path=json_path,
+        img_root=img_root,
         img_size=img_size,
     )
     loader = DataLoader(imgedit_ds, collate_fn=collate_single)
@@ -102,6 +102,9 @@ def parse_args():
     parser.add_argument("--num_inference_steps", type=int, default=30)
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
+    parser.add_argument("--save_dir", type=str, default="./output/benchmark/imgedit_output")
+    parser.add_argument("--json_path", type=str, default="YOUR_IMGEDIT_PATH/ImgEdit/Benchmark/Basic/basic_edit.json")
+    parser.add_argument("--img_root", type=str, default="YOUR_IMGEDIT_IMAGES_PATH/ImgEdit/Benchmark/singleturn")
         
     return parser.parse_args()
 
@@ -110,7 +113,7 @@ def parse_args():
 def main():
     args = parse_args()
     accelerator = Accelerator()
-    save_dir = './output/benchmark/imgedit_output'
+    save_dir = args.save_dir
     os.makedirs(save_dir, exist_ok=True)
         
     weight_dtype = {
@@ -127,7 +130,7 @@ def main():
     pipeline = accelerator.prepare(pipeline)
 
     # 3. Setup Data
-    imgedit_dataloader = load_dataloader(img_size=args.width)
+    imgedit_dataloader = load_dataloader(img_size=args.width, json_path=args.json_path, img_root=args.img_root)
     eval_dl = accelerator.prepare(imgedit_dataloader) 
 
     width, height = args.width, args.height

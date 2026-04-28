@@ -85,6 +85,8 @@ def parse_args():
     parser.add_argument("--num_inference_steps", type=int, default=30)
     parser.add_argument("--width", type=int, default=1024)
     parser.add_argument("--height", type=int, default=1024)
+    parser.add_argument("--save_dir", type=str, default="./output/benchmark/geneval_output")
+    parser.add_argument("--geneval_json", type=str, default="YOUR_GENEVAL/evaluation_metadata.jsonl")
         
     return parser.parse_args()
 
@@ -92,8 +94,9 @@ def parse_args():
 
 def main():
     args = parse_args()
+    save_dir = args.save_dir
+    os.makedirs(save_dir, exist_ok=True)
     accelerator = Accelerator()
-    save_dir = './output/benchmark/geneval_output'
         
     weight_dtype = {
         "float16": torch.float16,
@@ -110,8 +113,8 @@ def main():
 
     # 3. Setup Data
     dataset = GenEvalDataset(
-        prompt_path='YOUR_GENEVAL/evaluation_metadata.jsonl', 
-        save_dir=save_dir,
+        prompt_path=args.geneval_json, 
+        save_dir=args.save_dir,
     )
     loader = accelerator.prepare(DataLoader(dataset))
     width, height = args.width, args.height

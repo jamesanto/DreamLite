@@ -62,7 +62,7 @@ Experience real-time generation and editing on an iPhone 17 Pro. No internet con
   </tr>
 </table>
 
-> **Note**: If videos fail to render natively on GitHub, please visit our [Project Page](https://carlofkl.github.io/dreamlite/) to watch the full demonstrations.
+> **Note**: If demos fail to render natively on GitHub, please visit our [Project Page](https://carlofkl.github.io/dreamlite/) to watch the full demonstrations.
 
 ---
 
@@ -117,8 +117,8 @@ python infer_mobile.py --prompt "Change the background to a dense forest." --ima
 We provide comprehensive benchmark evaluation scripts (GenEval & ImgEdit) to facilitate performance comparisons between DreamLite and other state-of-the-art models. Please configure your local dataset paths within `tools/benchmark/infer_geneval.py` and `tools/benchmark/infer_imgedit.py` prior to execution.
 ```bash
 # Run the benchmark evaluation
-python tools/benchmark/infer_geneval.py
-python tools/benchmark/infer_imgedit.py
+python tools/benchmark/infer_geneval.py --save_dir ./output/benchmark/geneval_output --geneval_json "YOUR_GENEVAL/evaluation_metadata.jsonl"
+python tools/benchmark/infer_imgedit.py --save_dir ./output/benchmark/imgedit_output --json_path "YOUR_IMGEDIT_PATH/ImgEdit/Benchmark/Basic/basic_edit.json" --img_root "YOUR_IMGEDIT_IMAGES_PATH/ImgEdit/Benchmark/singleturn"
 ```
 
 <!-- ### 4. Inference via Python API (diffusers)

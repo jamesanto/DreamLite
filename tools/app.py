@@ -39,6 +39,23 @@ MODEL_CONFIGS = {
     }
 }
 
+BASE_RESOLUTIONS = [
+    "1024 × 1024 (1:1)",
+    "1152 × 896 (9:7)",
+    "896 × 1152 (7:9)",
+    "1216 × 832 (3:2)",
+    "832 × 1216 (2:3)",
+    "1344 × 768 (16:9)",
+    "768 × 1344 (9:16)",
+]
+
+def parse_resolution(res_str):
+    """从分辨率字符串中解析宽高，例如 '1024 × 1024 (1:1)' -> (1024, 1024)"""
+    parts = res_str.split("(")[0].strip().split("×")
+    w = int(parts[0].strip())
+    h = int(parts[1].strip())
+    return w, h
+
 # 用于在内存中缓存已加载的模型，避免重复加载
 loaded_models = {}
 current_model_name = None
@@ -91,6 +108,7 @@ def generate_image(
     model_choice, 
     prompt, 
     image, 
+    resolution,
     num_inference_steps, 
     guidance_scale, 
     image_guidance_scale, 
@@ -106,11 +124,19 @@ def generate_image(
     
     # 将 Gradio 传入的图片 (如果有的话) 转换为 PIL 格式
     input_image = image if image is not None else None
+
+    if model_choice == "DreamLite-base":
+        width, height = parse_resolution(resolution)
+    else:
+        # Mobile 版本固定 1024x1024
+        width, height = 1024, 1024
     
     # 调用对应的 Pipeline
     out = pipe(
         prompt=prompt,
         image=input_image,
+        width=width,
+        height=height,
         guidance_scale=guidance_scale,
         image_guidance_scale=image_guidance_scale,
         num_inference_steps=num_inference_steps,
@@ -118,6 +144,28 @@ def generate_image(
     ).images[0]
     
     return out
+
+# ==========================================
+# 3.5 UI 联动：切换模型时更新参数面板
+# ==========================================
+def on_model_change(model_choice):
+    """
+    切换模型时自动调整 UI 组件：
+    - Base: 显示分辨率选择，默认 28 步
+    - Mobile: 隐藏分辨率选择（固定 1024×1024），默认 4 步
+    """
+    if model_choice == "DreamLite-base":
+        return (
+            gr.update(visible=True, value="1024 × 1024 (1:1)"),  # 分辨率选择可见
+            gr.update(value=28),                                   # 默认 28 步
+            gr.update(value=3.5),                                  # guidance scale
+        )
+    else:
+        return (
+            gr.update(visible=False),                              # 分辨率选择隐藏
+            gr.update(value=4),                                    # 默认 4 步
+            gr.update(value=1.0),                                  # guidance scale
+        )
 
 # ==========================================
 # 4. 搭建 Gradio 页面
@@ -139,10 +187,19 @@ with gr.Blocks(title="DreamLite Demo") as demo:
             # 输入组件
             prompt_input = gr.Textbox(label="Prompt / Instruction", placeholder="e.g. A photo of a dog...", lines=3)
             image_input = gr.Image(type="pil", label="Input Image (Optional for Editing)")
+
+            # 分辨率选择（仅 Base 版本可见）
+            resolution_dropdown = gr.Dropdown(
+                choices=BASE_RESOLUTIONS,
+                value="1024 × 1024 (1:1)",
+                label="Resolution (Base model only, Mobile fixed at 1024×1024)",
+                interactive=True,
+                visible=True
+            )
             
             with gr.Accordion("Advanced Options", open=False):
-                steps_slider = gr.Slider(minimum=1, maximum=50, value=30, step=1, label="Inference Steps")
-                guidance_slider = gr.Slider(minimum=1.0, maximum=20.0, value=7.5, step=0.1, label="Guidance Scale")
+                steps_slider = gr.Slider(minimum=1, maximum=50, value=28, step=1, label="Inference Steps")
+                guidance_slider = gr.Slider(minimum=0.0, maximum=20.0, value=3.5, step=0.1, label="Guidance Scale")
                 img_guidance_slider = gr.Slider(minimum=0.0, maximum=5.0, value=1.0, step=0.1, label="Image Guidance Scale")
                 seed_slider = gr.Slider(minimum=0, maximum=999999, value=42, step=1, label="Seed")
                 
@@ -151,21 +208,29 @@ with gr.Blocks(title="DreamLite Demo") as demo:
         with gr.Column():
             # 输出组件
             output_image = gr.Image(type="pil", label="Output Image")
+    
+    # 模型切换时联动更新 UI
+    model_dropdown.change(
+        fn=on_model_change,
+        inputs=[model_dropdown],
+        outputs=[resolution_dropdown, steps_slider, guidance_slider]
+    )
 
     # 绑定点击事件 (注意 inputs 列表增加了 model_dropdown 作为第一个参数)
     submit_btn.click(
         fn=generate_image,
-        inputs=[model_dropdown, prompt_input, image_input, steps_slider, guidance_slider, img_guidance_slider, seed_slider],
+        inputs=[model_dropdown, prompt_input, image_input, resolution_dropdown, steps_slider, guidance_slider, img_guidance_slider, seed_slider],
         outputs=[output_image]
     )
     
     # 示例区 (同步加上对应的模型选择)
     gr.Examples(
         examples=[
-            ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, 28, 7.5, 1.0, 42],
-            ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.png", 4, 1.0, 1.0, 42] 
+            ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, "1024 × 1024 (1:1)", 28, 3.5, 1.0, 42],
+            ["DreamLite-base", "A young woman with long black hair, soft natural lighting, portrait photo", None, "832 × 1216 (2:3)", 28, 3.5, 1.0, 123],
+            ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.png", "1024 × 1024 (1:1)", 4, 1.0, 1.0, 42],
         ],
-        inputs=[model_dropdown, prompt_input, image_input, steps_slider, guidance_slider, img_guidance_slider, seed_slider]
+        inputs=[model_dropdown, prompt_input, image_input, resolution_dropdown, steps_slider, guidance_slider, img_guidance_slider, seed_slider]
     )
 
 # ==========================================
