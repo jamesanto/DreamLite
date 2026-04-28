@@ -314,14 +314,17 @@ class DreamLitePipelineLoRA(
             sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
 
         # 2. Prepare Dimensions (Buckets)
-        if bucket == 1:
-            height = width = 2048
-        elif bucket == 54:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
-        elif bucket == 765:
-            height, width = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
-        else:
-            height = width = 1024
+        if image is not None:  # edit task, resize to certain bucket
+            if bucket == 0 :
+                height = width = 1024
+            elif bucket == 1:
+                height = width = 2048
+            elif bucket == 54:
+                width, height = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
+            elif bucket == 765:
+                width, height = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
+            else:
+                height, width = height, width
 
         # 3. Prepare Time IDs
         original_size = (width, height)

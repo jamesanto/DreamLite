@@ -295,7 +295,7 @@ class DreamLitePipeline(
         return_dict: bool = True,
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
-        bucket: int = 0,
+        bucket: int = 54,
     ):
         # 1. Init pipeline parameters
         height = height or self.default_sample_size * self.vae_scale_factor
@@ -319,12 +319,12 @@ class DreamLitePipeline(
             elif bucket == 1:
                 height = width = 2048
             elif bucket == 54:
-                height, width = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
+                width, height = _get_closest_bucket(TARGET_BUCKETS_V54, width, height)
             elif bucket == 765:
-                height, width = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
+                width, height = _get_closest_bucket(TARGET_BUCKETS_V765, width, height)
             else:
                 height, width = height, width
-                
+
         # 3. Prepare Time IDs
         original_size = (width, height)
         add_time_ids = torch.tensor([list(original_size)], device=device, dtype=dtype)
