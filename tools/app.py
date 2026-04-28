@@ -131,6 +131,8 @@ def generate_image(
         # Mobile 版本固定 1024x1024
         width, height = 1024, 1024
     
+    if input_image is not None: width, height = input_image.size
+    
     # 调用对应的 Pipeline
     out = pipe(
         prompt=prompt,
@@ -142,6 +144,9 @@ def generate_image(
         num_inference_steps=num_inference_steps,
         generator=generator,
     ).images[0]
+
+    if out.size != (width, height):
+        out = out.resize((width, height), resample=Image.LANCZOS)
     
     return out
 
@@ -226,8 +231,8 @@ with gr.Blocks(title="DreamLite Demo") as demo:
     # 示例区 (同步加上对应的模型选择)
     gr.Examples(
         examples=[
-            ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, "1024 × 1024 (1:1)", 28, 3.5, 1.0, 42],
-            ["DreamLite-base", "A young woman with long black hair, soft natural lighting, portrait photo", None, "832 × 1216 (2:3)", 28, 3.5, 1.0, 123],
+            ["DreamLite-base", "A close-up of a fire spitting dragon, cinematic shot.", None, "832 × 1216 (2:3)", 28, 3.5, 1.0, 123],
+            ["DreamLite-mobile", "A portrait of a young woman with flowers.", None, "1024 × 1024 (1:1)", 28, 3.5, 1.0, 123],
             ["DreamLite-mobile", "Make it look like a pencil sketch", "assets/example.png", "1024 × 1024 (1:1)", 4, 1.0, 1.0, 42],
         ],
         inputs=[model_dropdown, prompt_input, image_input, resolution_dropdown, steps_slider, guidance_slider, img_guidance_slider, seed_slider]

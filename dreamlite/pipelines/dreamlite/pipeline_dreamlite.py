@@ -295,7 +295,7 @@ class DreamLitePipeline(
         return_dict: bool = True,
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
-        bucket: int = 54,
+        bucket: int = 0,
     ):
         # 1. Init pipeline parameters
         height = height or self.default_sample_size * self.vae_scale_factor
