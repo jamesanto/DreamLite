@@ -25,6 +25,7 @@ from dreamlite.pipelines.dreamlite.optimize import (
     get_optimal_dtype,
     is_turing_gpu,
 )
+from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
 
 # Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
 faulthandler.enable()
@@ -239,6 +240,7 @@ def generate(
     guidance_scale: float,
     image_guidance_scale: float,
     seed: int,
+    upscale_4x: bool,
     progress=gr.Progress(),
 ):
     global _cancel_requested
@@ -346,6 +348,13 @@ def generate(
         result = result.crop(crop_box)
         log.info("Cropped padding: %s → %s", (width, height), result.size)
 
+    if upscale_4x:
+        progress(0.9, desc="Upscaling 4x...")
+        log.info("Upscaling %s with 4x-UltraSharp...", result.size)
+        t_up = time.perf_counter()
+        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
+        log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
+
     log.info("Image: %s mode=%s", result.size, result.mode)
 
     log.info("Done in %.1fs (%.1f steps/s)", elapsed, steps / elapsed)
@@ -428,6 +437,10 @@ def build_app() -> gr.Blocks:
                         label="Seed (-1 = random)",
                         precision=0,
                     )
+                    upscale_checkbox = gr.Checkbox(
+                        value=True,
+                        label="4x Upscale (UltraSharp)",
+                    )
 
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
                 stop_btn = gr.Button("Stop", variant="stop", size="lg", visible=True)
@@ -446,6 +459,7 @@ def build_app() -> gr.Blocks:
             guidance_slider,
             img_guidance_slider,
             seed_input,
+            upscale_checkbox,
         ]
 
         model_dropdown.change(
@@ -487,6 +501,7 @@ def build_app() -> gr.Blocks:
                     3.5,
                     1.0,
                     123,
+                    True,
                 ],
                 [
                     list(MODEL_REGISTRY.keys())[1],
@@ -497,6 +512,7 @@ def build_app() -> gr.Blocks:
                     1.0,
                     1.0,
                     42,
+                    True,
                 ],
             ],
             inputs=all_inputs,

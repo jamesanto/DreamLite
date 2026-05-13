@@ -61,6 +61,7 @@ def parse_args():
     parser.add_argument(
         "--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)"
     )
+    parser.add_argument("--no_upscale", action="store_true", help="Disable 4x UltraSharp upscaling")
 
     return parser.parse_args()
 
@@ -174,6 +175,13 @@ def main():
     if crop_box is not None:
         image = image.crop(crop_box)
         print(f"Cropped padding: {width}×{height} → {image.size[0]}×{image.size[1]}")
+
+    if not args.no_upscale:
+        from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
+
+        print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x-UltraSharp...")
+        image = upscale_tiled(image, device=torch.device(args.device))
+        print(f"Upscaled to {image.size[0]}×{image.size[1]}")
 
     out_path = f"{prompt.replace(' ', '_')}.png"
     image.save(out_path)
