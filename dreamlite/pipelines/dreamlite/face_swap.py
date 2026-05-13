@@ -23,6 +23,13 @@ _FACE_ANALYSER = None
 _FACE_SWAPPER = None
 
 
+def offload_face_swap():
+    """Release face swap models to free GPU memory (ONNX Runtime sessions)."""
+    global _FACE_ANALYSER, _FACE_SWAPPER
+    _FACE_ANALYSER = None
+    _FACE_SWAPPER = None
+
+
 def _download_swapper_model() -> Path:
     """Download inswapper_128.onnx from HuggingFace (cached after first download)."""
     from huggingface_hub import hf_hub_download

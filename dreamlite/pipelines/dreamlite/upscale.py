@@ -33,7 +33,9 @@ def _load_model(device: torch.device, dtype: torch.dtype):
     """Load the upscaler model (cached in memory after first load)."""
     cache_key = (str(device), str(dtype))
     if cache_key in _MODEL_CACHE:
-        return _MODEL_CACHE[cache_key]
+        model, use_half = _MODEL_CACHE[cache_key]
+        model.to(device)
+        return model, use_half
 
     from spandrel import ImageModelDescriptor, ModelLoader
 
@@ -50,6 +52,14 @@ def _load_model(device: torch.device, dtype: torch.dtype):
     _MODEL_CACHE[cache_key] = (model, use_half)
     logger.info("SPAN upscaler loaded (device=%s, half=%s, scale=%dx)", device, use_half, model.scale)
     return model, use_half
+
+
+def offload_upscaler():
+    """Move the upscaler model to CPU to free VRAM."""
+    for model, _ in _MODEL_CACHE.values():
+        model.to("cpu")
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def _img_to_tensor(img: Image.Image, device: torch.device, half: bool) -> torch.Tensor:

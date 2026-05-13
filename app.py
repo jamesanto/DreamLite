@@ -21,12 +21,12 @@ from PIL import Image
 from tqdm import tqdm
 
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
-from dreamlite.pipelines.dreamlite.face_swap import swap_face
+from dreamlite.pipelines.dreamlite.face_swap import offload_face_swap, swap_face
 from dreamlite.pipelines.dreamlite.optimize import (
     get_optimal_dtype,
     is_turing_gpu,
 )
-from dreamlite.pipelines.dreamlite.upscale import upscale
+from dreamlite.pipelines.dreamlite.upscale import offload_upscaler, upscale
 
 # Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
 faulthandler.enable()
@@ -393,6 +393,10 @@ def generate(
         yield f"Done — {result.size[0]}×{result.size[1]}", result
 
     log.info("Image: %s mode=%s", result.size, result.mode)
+
+    # Free post-processing models from VRAM so next generation is fast
+    offload_upscaler()
+    offload_face_swap()
 
     log.info("Done in %.1fs (%.1f steps/s)", elapsed, steps / elapsed)
     progress(1.0, desc=f"Done in {elapsed:.1f}s")
