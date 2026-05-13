@@ -96,6 +96,7 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
 
     Uses 'reduce-overhead' mode on Linux, 'default' mode on Windows.
     Requires Triton (triton-windows on Windows) for the inductor backend.
+    Enables persistent disk cache so compilation only happens once.
     Falls back to eager mode if Triton is missing or compilation fails.
     """
     if sys.version_info < (3, 10):
@@ -116,6 +117,12 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
 
     try:
         torch._dynamo.config.suppress_errors = True
+
+        # Enable persistent disk cache — first run compiles, subsequent runs load from cache
+        if hasattr(torch._inductor, "config"):
+            torch._inductor.config.fx_graph_cache = True
+            torch._inductor.config.fx_graph_remote_cache = False
+            logger.info("Inductor disk cache enabled (cached kernels reused across runs).")
 
         backend = "inductor"
         mode = "reduce-overhead"
