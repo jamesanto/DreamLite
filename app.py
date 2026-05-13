@@ -294,7 +294,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DreamLite Gradio App")
     parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
     parser.add_argument("--port", type=int, default=7863, help="Server port")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Server host")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
     args = parser.parse_args()
 
     app = build_app()
