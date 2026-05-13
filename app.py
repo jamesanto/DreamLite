@@ -37,7 +37,7 @@ DTYPE = get_optimal_dtype() if torch.cuda.is_available() else torch.float32
 log.info("Device: %s | Dtype: %s", DEVICE, DTYPE)
 if torch.cuda.is_available():
     gpu_name = torch.cuda.get_device_name(0)
-    vram_gb = torch.cuda.get_device_properties(0).total_mem / (1024**3)
+    vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
     log.info("GPU: %s (%.1f GB VRAM) | Turing: %s", gpu_name, vram_gb, is_turing_gpu())
     log.info("bitsandbytes available: %s", _BNB_AVAILABLE)
 
