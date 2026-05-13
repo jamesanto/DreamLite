@@ -176,7 +176,6 @@ def generate(
     image_guidance_scale: float,
     seed: int,
     use_4bit: bool,
-    progress=gr.Progress(),
 ):
     if not prompt.strip():
         raise gr.Error("Please enter a prompt.")
@@ -187,7 +186,6 @@ def generate(
     log.info("Prompt: %s", prompt[:80] + ("..." if len(prompt) > 80 else ""))
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
-    progress(0, desc="Loading model...")
     pipe = _load_pipeline(model_name, use_4bit=use_4bit)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
@@ -210,12 +208,10 @@ def generate(
         kwargs["guidance_scale"] = guidance_scale
         kwargs["image_guidance_scale"] = image_guidance_scale
 
-    progress(0.1, desc=f"Generating ({steps} steps)...")
     t0 = time.perf_counter()
-    result = pipe(**kwargs).images[0]
+    output = pipe(**kwargs)
     elapsed = time.perf_counter() - t0
 
-    progress(0.95, desc="Finalizing...")
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
 
     if torch.cuda.is_available():
@@ -223,10 +219,23 @@ def generate(
         log.info("Peak VRAM: %.2f GB", peak)
         torch.cuda.reset_peak_memory_stats()
 
-    if result.size != (width, height):
-        result = result.resize((width, height), resample=Image.LANCZOS)
+    result = output.images[0]
+    log.info("Output type: %s", type(result).__name__)
 
-    progress(1.0, desc="Done!")
+    # Ensure output is a valid RGB PIL Image for Gradio
+    if not isinstance(result, Image.Image):
+        import numpy as np
+
+        if isinstance(result, np.ndarray):
+            if result.dtype != np.uint8:
+                result = (result.clip(0, 1) * 255).astype(np.uint8)
+            result = Image.fromarray(result)
+        else:
+            raise gr.Error(f"Pipeline returned unexpected output type: {type(result)}")
+    if result.mode != "RGB":
+        result = result.convert("RGB")
+
+    log.info("Image: %s mode=%s", result.size, result.mode)
     return result
 
 
