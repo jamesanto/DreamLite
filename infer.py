@@ -174,6 +174,13 @@ def main():
 
     image = pipeline(**call_kwargs).images[0]
 
+    # Offload pipeline to free VRAM for post-processing
+    if torch.cuda.is_available():
+        print("Offloading pipeline to free VRAM...")
+        pipeline.unet.to("cpu")
+        pipeline.vae.to("cpu")
+        torch.cuda.empty_cache()
+
     if crop_box is not None:
         image = image.crop(crop_box)
         print(f"Cropped padding: {width}×{height} → {image.size[0]}×{image.size[1]}")
@@ -193,7 +200,7 @@ def main():
         from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
 
         print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x-UltraSharp...")
-        image = upscale_tiled(image, device=torch.device(args.device))
+        image = upscale_tiled(image, device=torch.device(args.device), tile_size=1024)
         print(f"Upscaled to {image.size[0]}×{image.size[1]}")
 
     out_path = f"{prompt.replace(' ', '_')}.png"

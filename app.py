@@ -177,8 +177,15 @@ def _load_pipeline(model_name: str):
 
     if model_name in _pipeline_cache:
         _active_model = model_name
+        pipe = _pipeline_cache[model_name]
+        if torch.cuda.is_available():
+            if hasattr(pipe, "unet") and next(pipe.unet.parameters()).device.type != "cuda":
+                log.info("Moving UNet + VAE back to GPU...")
+                pipe.unet.to(DEVICE)
+                if hasattr(pipe, "vae"):
+                    pipe.vae.to(DEVICE)
         log.info("Using cached pipeline: %s", model_name)
-        return _pipeline_cache[model_name]
+        return pipe
 
     if _active_model and _active_model != model_name and _active_model in _pipeline_cache:
         log.info("Unloading %s to free memory...", _active_model)
@@ -332,6 +339,15 @@ def generate(
         except Exception:
             pass
 
+    # Offload UNet and VAE to CPU — they are no longer needed for post-processing
+    if torch.cuda.is_available():
+        log.info("Offloading UNet + VAE to free VRAM for post-processing...")
+        if hasattr(pipe, "unet"):
+            pipe.unet.to("cpu")
+        if hasattr(pipe, "vae"):
+            pipe.vae.to("cpu")
+        torch.cuda.empty_cache()
+
     result = output.images[0]
     log.info("Output type: %s", type(result).__name__)
 
@@ -369,7 +385,7 @@ def generate(
         progress(0.9, desc="Upscaling 4x...")
         log.info("Upscaling %s with 4x-UltraSharp...", result.size)
         t_up = time.perf_counter()
-        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
+        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE, tile_size=1024)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
         yield result
 

@@ -120,7 +120,7 @@ def upscale_tiled(
         if result is not None:
             del input_tensor
             return result
-        tile_size = 512
+        tile_size = 1024
         logger.info("Whole-image upscale OOM — falling back to %dpx tiles", tile_size)
 
     output = torch.zeros((1, 3, out_h, out_w), dtype=input_tensor.dtype, device=device)
