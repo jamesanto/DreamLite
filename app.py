@@ -5,15 +5,15 @@ Supports both DreamLite-base (28-step, high fidelity) and DreamLite-mobile (4-st
 Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPUs.
 """
 
-import torch
 import gradio as gr
+import torch
 from PIL import Image
 
-from dreamlite import DreamLitePipeline, DreamLiteMobilePipeline
+from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
+    _BNB_AVAILABLE,
     get_4bit_quantization_config,
     get_optimal_dtype,
-    _BNB_AVAILABLE,
 )
 
 # ─── Configuration ───────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ def build_app() -> gr.Blocks:
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
 
             with gr.Column(scale=1):
-                output_image = gr.Image(type="pil", label="Result", show_download_button=True)
+                output_image = gr.Image(type="pil", label="Result")
 
         model_dropdown.change(
             fn=on_model_change,
