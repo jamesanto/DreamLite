@@ -62,6 +62,7 @@ def parse_args():
         "--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)"
     )
     parser.add_argument("--no_upscale", action="store_true", help="Disable 4x UltraSharp upscaling")
+    parser.add_argument("--no_face_restore", action="store_true", help="Disable face restoration (swap original face back)")
 
     return parser.parse_args()
 
@@ -107,6 +108,7 @@ def main():
     # Setup Data
     prompt = args.prompt
     input_image = load_image(args.image_path) if args.image_path else None
+    original_input = input_image
 
     EDIT_BUCKETS = [
         (1024, 1024), (1152, 896), (896, 1152),
@@ -175,6 +177,17 @@ def main():
     if crop_box is not None:
         image = image.crop(crop_box)
         print(f"Cropped padding: {width}×{height} → {image.size[0]}×{image.size[1]}")
+
+    if not args.no_face_restore and original_input is not None:
+        from dreamlite.pipelines.dreamlite.face_swap import swap_face
+
+        print("Restoring original face...")
+        swapped = swap_face(original_input, image)
+        if swapped is not None:
+            image = swapped
+            print("Face restored successfully.")
+        else:
+            print("No face detected — skipping face restore.")
 
     if not args.no_upscale:
         from dreamlite.pipelines.dreamlite.upscale import upscale_tiled

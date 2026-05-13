@@ -24,6 +24,9 @@ dependencies = [
     "einops",
     "spandrel>=0.4",
     "huggingface-hub>=0.20",
+    "insightface>=0.7",
+    "onnxruntime-gpu>=1.17; sys_platform != 'darwin'",
+    "onnxruntime>=1.17; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]

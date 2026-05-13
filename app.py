@@ -21,6 +21,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
+from dreamlite.pipelines.dreamlite.face_swap import swap_face
 from dreamlite.pipelines.dreamlite.optimize import (
     get_optimal_dtype,
     is_turing_gpu,
@@ -241,6 +242,7 @@ def generate(
     image_guidance_scale: float,
     seed: int,
     upscale_4x: bool,
+    restore_face: bool,
     progress=gr.Progress(),
 ):
     global _cancel_requested
@@ -266,6 +268,7 @@ def generate(
 
     width, height = _parse_resolution(resolution)
     crop_box = None
+    original_input = input_image
     if input_image is not None:
         padded_img, width, height, crop_box = _prepare_edit_image(input_image)
         log.info(
@@ -347,6 +350,17 @@ def generate(
     if crop_box is not None:
         result = result.crop(crop_box)
         log.info("Cropped padding: %s → %s", (width, height), result.size)
+
+    if restore_face and original_input is not None:
+        progress(0.85, desc="Restoring face...")
+        log.info("Restoring original face...")
+        t_face = time.perf_counter()
+        swapped = swap_face(original_input, result)
+        if swapped is not None:
+            result = swapped
+            log.info("Face restored in %.1fs", time.perf_counter() - t_face)
+        else:
+            log.info("No face detected — skipping face restore")
 
     if upscale_4x:
         progress(0.9, desc="Upscaling 4x...")
@@ -441,6 +455,10 @@ def build_app() -> gr.Blocks:
                         value=True,
                         label="4x Upscale (UltraSharp)",
                     )
+                    face_restore_checkbox = gr.Checkbox(
+                        value=True,
+                        label="Restore Face (swap original face back after edit)",
+                    )
 
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
                 stop_btn = gr.Button("Stop", variant="stop", size="lg", visible=True)
@@ -460,6 +478,7 @@ def build_app() -> gr.Blocks:
             img_guidance_slider,
             seed_input,
             upscale_checkbox,
+            face_restore_checkbox,
         ]
 
         model_dropdown.change(
@@ -502,6 +521,7 @@ def build_app() -> gr.Blocks:
                     1.0,
                     123,
                     True,
+                    True,
                 ],
                 [
                     list(MODEL_REGISTRY.keys())[1],
@@ -512,6 +532,7 @@ def build_app() -> gr.Blocks:
                     1.0,
                     1.0,
                     42,
+                    True,
                     True,
                 ],
             ],
