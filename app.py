@@ -200,6 +200,7 @@ def generate(
     image_guidance_scale: float,
     seed: int,
     use_4bit: bool,
+    progress=gr.Progress(),
 ):
     global _cancel_requested
     _cancel_requested = False
@@ -213,6 +214,7 @@ def generate(
     log.info("Prompt: %s", prompt[:80] + ("..." if len(prompt) > 80 else ""))
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
+    progress(0, desc="Loading model...")
     yield None, "Loading model..."
     pipe = _load_pipeline(model_name, use_4bit=use_4bit)
     generator = torch.Generator(device="cpu").manual_seed(seed)
@@ -240,10 +242,12 @@ def generate(
         pct = step * 100 // total
         bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
         log.info("  [%s] Step %d/%d (%.2fs/step)", bar, step, total, step_time)
+        progress(step / total, desc=f"Step {step}/{total} ({step_time:.1f}s/step)")
 
     kwargs["callback_on_step_end"] = step_callback
     kwargs["interrupt_flag"] = lambda: _cancel_requested
 
+    progress(0.05, desc="Encoding text...")
     yield None, f"Generating (0/{steps} steps)..."
 
     t0 = time.perf_counter()
@@ -290,6 +294,7 @@ def generate(
             status += f" | Peak: {torch.cuda.max_memory_allocated() / (1024**3):.1f} GB"
         except Exception:
             pass
+    progress(1.0, desc="Done!")
     yield np.array(result), status
 
 
