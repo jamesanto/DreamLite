@@ -412,5 +412,4 @@ if __name__ == "__main__":
         server_port=APP_ARGS.port,
         share=APP_ARGS.share,
         theme=gr.themes.Soft(),
-        analytics_enabled=False,
     )

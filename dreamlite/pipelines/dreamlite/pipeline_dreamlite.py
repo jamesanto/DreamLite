@@ -175,9 +175,9 @@ class DreamLitePipeline(
         self.default_sample_size = 128
         self._offload_text_encoder = False
         self._unet_compiled = False
-        self._text_encoder_quantized = getattr(
-            getattr(self.text_encoder, "config", None), "quantization_config", None
-        ) is not None
+        self._text_encoder_quantized = (
+            getattr(getattr(self.text_encoder, "config", None), "quantization_config", None) is not None
+        )
 
     def optimize(
         self,
