@@ -110,10 +110,46 @@ EDIT_BUCKETS = [
 ]
 
 
-def _best_edit_resolution(img_w: int, img_h: int) -> tuple[int, int]:
-    """Pick the bucket resolution closest in aspect ratio to the input image."""
+def _prepare_edit_image(img: Image.Image) -> tuple[Image.Image, int, int, tuple[int, int, int, int]]:
+    """
+    Resize and pad an input image to the best matching bucket resolution.
+
+    Strategy:
+      1. Pick the bucket whose aspect ratio is closest to the input.
+      2. Scale the image so its longest side matches the bucket's longest side.
+      3. Pad the shorter side symmetrically (gray fill) to reach exact bucket dims.
+
+    Returns:
+        (padded_image, bucket_w, bucket_h, crop_box)
+        where crop_box = (left, top, right, bottom) to remove padding from output.
+    """
+    img_w, img_h = img.size
     target_ar = img_w / img_h
-    return min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
+    bucket_w, bucket_h = min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
+
+    img_long = max(img_w, img_h)
+    bucket_long = max(bucket_w, bucket_h)
+    scale = bucket_long / img_long
+
+    new_w = round(img_w * scale)
+    new_h = round(img_h * scale)
+
+    # Clamp to bucket dimensions (shouldn't exceed, but safety)
+    new_w = min(new_w, bucket_w)
+    new_h = min(new_h, bucket_h)
+
+    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+    # Pad symmetrically to fill bucket
+    pad_left = (bucket_w - new_w) // 2
+    pad_top = (bucket_h - new_h) // 2
+
+    padded = Image.new("RGB", (bucket_w, bucket_h), (128, 128, 128))
+    padded.paste(resized, (pad_left, pad_top))
+
+    crop_box = (pad_left, pad_top, pad_left + new_w, pad_top + new_h)
+
+    return padded, bucket_w, bucket_h, crop_box
 
 # ─── State ───────────────────────────────────────────────────────────────────
 
@@ -215,9 +251,14 @@ def generate(
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
     width, height = _parse_resolution(resolution)
+    crop_box = None
     if input_image is not None:
-        width, height = _best_edit_resolution(*input_image.size)
-        log.info("Edit resolution: %d × %d (matched from %d × %d input)", width, height, *input_image.size)
+        padded_img, width, height, crop_box = _prepare_edit_image(input_image)
+        log.info(
+            "Edit: input %d×%d → resized+padded to %d×%d (crop_box=%s)",
+            *input_image.size, width, height, crop_box,
+        )
+        input_image = padded_img
     else:
         log.info("Resolution: %d × %d", width, height)
 
@@ -283,6 +324,10 @@ def generate(
             raise gr.Error(f"Pipeline returned unexpected output type: {type(result)}")
     if result.mode != "RGB":
         result = result.convert("RGB")
+
+    if crop_box is not None:
+        result = result.crop(crop_box)
+        log.info("Cropped padding: %s → %s", (width, height), result.size)
 
     log.info("Image: %s mode=%s", result.size, result.mode)
 

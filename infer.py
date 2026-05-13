@@ -107,11 +107,29 @@ def main():
         (1216, 832), (832, 1216), (1344, 768), (768, 1344),
     ]
 
+    crop_box = None
     if input_image is not None:
         img_w, img_h = input_image.size
         target_ar = img_w / img_h
-        width, height = min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
-        print(f"Edit mode: input {img_w}×{img_h} → matched bucket {width}×{height}")
+        bucket_w, bucket_h = min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
+
+        img_long = max(img_w, img_h)
+        bucket_long = max(bucket_w, bucket_h)
+        scale = bucket_long / img_long
+        new_w = min(round(img_w * scale), bucket_w)
+        new_h = min(round(img_h * scale), bucket_h)
+
+        resized = input_image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+        pad_left = (bucket_w - new_w) // 2
+        pad_top = (bucket_h - new_h) // 2
+        padded = Image.new("RGB", (bucket_w, bucket_h), (128, 128, 128))
+        padded.paste(resized, (pad_left, pad_top))
+
+        crop_box = (pad_left, pad_top, pad_left + new_w, pad_top + new_h)
+        input_image = padded
+        width, height = bucket_w, bucket_h
+        print(f"Edit mode: input {img_w}×{img_h} → resize {new_w}×{new_h} → pad to {width}×{height}")
     else:
         width, height = args.width, args.height
 
@@ -136,13 +154,14 @@ def main():
         "generator": torch.Generator("cpu").manual_seed(42),
         "callback_on_step_end": cli_step_callback,
     }
-    if input_image is not None:
+    if crop_box is not None:
         call_kwargs["bucket"] = -1
 
     image = pipeline(**call_kwargs).images[0]
 
-    if image.size != (width, height):
-        image = image.resize((width, height), Image.Resampling.LANCZOS)
+    if crop_box is not None:
+        image = image.crop(crop_box)
+        print(f"Cropped padding: {width}×{height} → {image.size[0]}×{image.size[1]}")
 
     out_path = f"{prompt.replace(' ', '_')}.png"
     image.save(out_path)
