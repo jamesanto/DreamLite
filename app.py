@@ -99,12 +99,13 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     quantized = use_4bit and _BNB_AVAILABLE and DEVICE == "cuda"
     if quantized:
         from transformers import Qwen3VLForConditionalGeneration
+
         log.info("Loading %s with 4-bit text encoder...", model_name)
         text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
             config["path"],
             subfolder="text_encoder",
             quantization_config=get_4bit_quantization_config(compute_dtype=DTYPE),
-            torch_dtype=DTYPE,
+            device_map="auto",
         )
         load_kwargs["text_encoder"] = text_encoder
     else:
@@ -113,7 +114,10 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     t0 = time.perf_counter()
     pipe = config["cls"].from_pretrained(config["path"], **load_kwargs)
 
-    if not quantized:
+    if quantized:
+        pipe.unet.to(DEVICE, dtype=DTYPE)
+        pipe.vae.to(DEVICE, dtype=DTYPE)
+    else:
         pipe = pipe.to(DEVICE)
 
     if hasattr(pipe, "optimize") and DEVICE == "cuda":

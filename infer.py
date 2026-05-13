@@ -92,7 +92,7 @@ def main():
             args.model_id,
             subfolder="text_encoder",
             quantization_config=get_4bit_quantization_config(compute_dtype=weight_dtype),
-            torch_dtype=weight_dtype,
+            device_map="auto",
         )
         load_kwargs["text_encoder"] = text_encoder
     elif use_4bit and not _BNB_AVAILABLE:
@@ -101,8 +101,11 @@ def main():
     print(f"Loading diffusers pipeline from: {args.model_id}")
     pipeline = DreamLitePipeline.from_pretrained(args.model_id, **load_kwargs)
 
-    # Move to device (4-bit models handle device placement internally via accelerate)
-    if not (use_4bit and _BNB_AVAILABLE):
+    # Move components to device: quantized text encoder already on CUDA via device_map
+    if use_4bit and _BNB_AVAILABLE:
+        pipeline.unet.to(args.device, dtype=weight_dtype)
+        pipeline.vae.to(args.device, dtype=weight_dtype)
+    else:
         pipeline = pipeline.to(args.device)
 
     # Apply speed optimizations
