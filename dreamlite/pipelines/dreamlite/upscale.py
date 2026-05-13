@@ -70,8 +70,7 @@ def _try_whole_image(model, input_tensor, img_w, img_h, out_w, out_h, scale, til
     """Attempt to upscale the entire image in a single forward pass (fastest path)."""
     try:
         logger.info("Upscaling %dx%d → %dx%d (whole image, single pass)", img_w, img_h, out_w, out_h)
-        with torch.inference_mode():
-            output = model(input_tensor)
+        output = model(input_tensor)
         result = _tensor_to_img(output)
         del output
         return result
@@ -81,6 +80,7 @@ def _try_whole_image(model, input_tensor, img_w, img_h, out_w, out_h, scale, til
         return None
 
 
+@torch.inference_mode()
 def upscale_tiled(
     img: Image.Image,
     device: torch.device = None,
@@ -143,9 +143,7 @@ def upscale_tiled(
             y_end_pad = min(y_end + tile_pad, img_h)
 
             tile_input = input_tensor[:, :, y_start_pad:y_end_pad, x_start_pad:x_end_pad]
-
-            with torch.inference_mode():
-                tile_output = model(tile_input)
+            tile_output = model(tile_input)
 
             out_x_start = (x_start - x_start_pad) * scale
             out_y_start = (y_start - y_start_pad) * scale

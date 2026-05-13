@@ -388,7 +388,7 @@ def generate(
         yield "Upscaling 4x...", result
         log.info("Upscaling %s with 4x-UltraSharp...", result.size)
         t_up = time.perf_counter()
-        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE, tile_size=1024)
+        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
         yield f"Done — {result.size[0]}×{result.size[1]}", result
 

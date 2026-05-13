@@ -201,7 +201,7 @@ def main():
         from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
 
         print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x-UltraSharp...")
-        image = upscale_tiled(image, device=torch.device(args.device), tile_size=1024)
+        image = upscale_tiled(image, device=torch.device(args.device))
         print(f"Upscaled to {image.size[0]}×{image.size[1]}")
 
     out_path = f"{prompt.replace(' ', '_')}.png"
