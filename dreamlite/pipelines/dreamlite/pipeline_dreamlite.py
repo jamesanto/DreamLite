@@ -488,6 +488,13 @@ class DreamLitePipeline(
 
         # 7. Denoising Loop
         _sync()
+        if _use_cuda:
+            _free_vram = (torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated()) / (1024**3)
+            _alloc = torch.cuda.memory_allocated() / (1024**3)
+            logger.info(
+                "UNet loop start — VRAM: %.2f GB allocated, %.2f GB free (batch=%d)",
+                _alloc, _free_vram, 2 if task == "generate" else 3,
+            )
         _t_unet_start = _time.perf_counter()
         _step_times = []
 
