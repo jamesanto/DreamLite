@@ -8,6 +8,7 @@ Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPU
 import argparse
 import faulthandler
 import logging
+import os
 import time
 
 import diffusers.utils.logging as diffusers_logging
@@ -26,6 +27,9 @@ from dreamlite.pipelines.dreamlite.optimize import (
 
 # Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
 faulthandler.enable()
+
+# Disable Gradio analytics — its pandas/pyarrow usage segfaults on Windows
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 
 # ─── CLI Args (parsed early so they're available to configuration) ────────────
 
@@ -408,4 +412,5 @@ if __name__ == "__main__":
         server_port=APP_ARGS.port,
         share=APP_ARGS.share,
         theme=gr.themes.Soft(),
+        analytics_enabled=False,
     )
