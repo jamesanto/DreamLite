@@ -32,6 +32,8 @@ faulthandler.enable()
 # when Gradio's queueing.py calls compute_analytics_summary → DataFrame.
 # This MUST be set before pandas is imported (by gradio).
 os.environ["PANDAS_FUTURE_INFER_STRING"] = "0"
+# Also prevent the analytics code path from ever executing (belt-and-suspenders)
+os.environ["GRADIO_ANALYTICS_CACHE_FREQUENCY"] = "1000000000"
 
 # ─── CLI Args (parsed early so they're available to configuration) ────────────
 
