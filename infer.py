@@ -113,10 +113,10 @@ def main():
         pipeline.optimize(
             offload_text_encoder=True,
             compile_unet_model=True,
-            fuse_qkv=True,
+            fuse_qkv=False,
             enable_vae_tiling=True,
         )
-        print("Pipeline optimized (offload + compile + fuse_qkv + vae_tiling).")
+        print("Pipeline optimized (offload + compile + vae_tiling).")
 
     # Setup Data
     prompt = args.prompt

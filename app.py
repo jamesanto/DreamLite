@@ -124,7 +124,7 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
         pipe.optimize(
             offload_text_encoder=True,
             compile_unet_model=False,
-            fuse_qkv=True,
+            fuse_qkv=False,
             enable_vae_tiling=True,
         )
 

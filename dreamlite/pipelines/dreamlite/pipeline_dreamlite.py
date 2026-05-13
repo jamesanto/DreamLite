@@ -199,8 +199,11 @@ class DreamLitePipeline(
         self._offload_text_encoder = offload_text_encoder
 
         if fuse_qkv:
-            self.unet.fuse_qkv_projections()
-            logger.info("Fused QKV projections in UNet.")
+            try:
+                self.unet.fuse_qkv_projections()
+                logger.info("Fused QKV projections in UNet.")
+            except (AttributeError, RuntimeError) as e:
+                logger.warning("QKV fusion not supported for this model: %s", e)
 
         if compile_unet_model and not self._unet_compiled:
             self.unet = compile_unet(self.unet)
