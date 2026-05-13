@@ -16,7 +16,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 _HF_REPO = "Phips/4xNomosUni_span_multijpg"
-_HF_FILENAME = "4xNomosUni_span_multijpg.pth"
+_HF_FILENAME = "4xNomosUni_span_multijpg.safetensors"
 _MODEL_CACHE: dict = {}
 
 
