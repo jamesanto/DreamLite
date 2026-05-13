@@ -238,12 +238,8 @@ def generate(
 
     log.info("Image: %s mode=%s", result.size, result.mode)
 
-    # Save to temp file and return path (avoids Gradio in-memory serialization issues)
-    import tempfile
-    tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-    result.save(tmp.name, format="PNG")
-    log.info("Saved to: %s", tmp.name)
-    return tmp.name
+    import numpy as np
+    return np.array(result)
 
 
 def on_model_change(model_name: str):
@@ -328,7 +324,7 @@ def build_app() -> gr.Blocks:
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
 
             with gr.Column(scale=1):
-                output_image = gr.Image(type="filepath", label="Result")
+                output_image = gr.Image(label="Result", format="png")
 
         # ─── Event bindings ──────────────────────────────────────────────
 
