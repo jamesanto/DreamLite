@@ -190,19 +190,30 @@ def build_app() -> gr.Blocks:
 
                 with gr.Accordion("Advanced", open=False):
                     steps_slider = gr.Slider(
-                        minimum=1, maximum=50, value=20, step=1,
+                        minimum=1,
+                        maximum=50,
+                        value=20,
+                        step=1,
                         label="Inference Steps",
                     )
                     guidance_slider = gr.Slider(
-                        minimum=0.0, maximum=20.0, value=3.5, step=0.1,
+                        minimum=0.0,
+                        maximum=20.0,
+                        value=3.5,
+                        step=0.1,
                         label="Guidance Scale",
                     )
                     img_guidance_slider = gr.Slider(
-                        minimum=0.0, maximum=5.0, value=1.0, step=0.1,
+                        minimum=0.0,
+                        maximum=5.0,
+                        value=1.0,
+                        step=0.1,
                         label="Image Guidance Scale",
                     )
                     seed_input = gr.Number(
-                        value=42, label="Seed", precision=0,
+                        value=42,
+                        label="Seed",
+                        precision=0,
                     )
                     use_4bit_checkbox = gr.Checkbox(
                         value=True,
@@ -238,8 +249,28 @@ def build_app() -> gr.Blocks:
 
         gr.Examples(
             examples=[
-                [list(MODEL_REGISTRY.keys())[0], "A close-up of a fire-breathing dragon, cinematic shot", None, "832 × 1216 (2:3)", 20, 3.5, 1.0, 123, True],
-                [list(MODEL_REGISTRY.keys())[1], "A portrait of a young woman with flowers", None, "1024 × 1024 (1:1)", 4, 1.0, 1.0, 42, True],
+                [
+                    list(MODEL_REGISTRY.keys())[0],
+                    "A close-up of a fire-breathing dragon, cinematic shot",
+                    None,
+                    "832 × 1216 (2:3)",
+                    20,
+                    3.5,
+                    1.0,
+                    123,
+                    True,
+                ],
+                [
+                    list(MODEL_REGISTRY.keys())[1],
+                    "A portrait of a young woman with flowers",
+                    None,
+                    "1024 × 1024 (1:1)",
+                    4,
+                    1.0,
+                    1.0,
+                    42,
+                    True,
+                ],
             ],
             inputs=[
                 model_dropdown,
@@ -262,7 +293,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="DreamLite Gradio App")
     parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
-    parser.add_argument("--port", type=int, default=7860, help="Server port")
+    parser.add_argument("--port", type=int, default=7863, help="Server port")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Server host")
     args = parser.parse_args()
 
