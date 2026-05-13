@@ -351,6 +351,8 @@ def generate(
         result = result.crop(crop_box)
         log.info("Cropped padding: %s → %s", (width, height), result.size)
 
+    yield result
+
     if restore_face and original_input is not None:
         progress(0.85, desc="Restoring face...")
         log.info("Restoring original face...")
@@ -359,6 +361,7 @@ def generate(
         if swapped is not None:
             result = swapped
             log.info("Face restored in %.1fs", time.perf_counter() - t_face)
+            yield result
         else:
             log.info("No face detected — skipping face restore")
 
@@ -368,12 +371,12 @@ def generate(
         t_up = time.perf_counter()
         result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
+        yield result
 
     log.info("Image: %s mode=%s", result.size, result.mode)
 
     log.info("Done in %.1fs (%.1f steps/s)", elapsed, steps / elapsed)
     progress(1.0, desc=f"Done in {elapsed:.1f}s")
-    yield result
 
 
 def on_model_change(model_name: str):
