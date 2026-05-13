@@ -73,10 +73,10 @@ if torch.cuda.is_available():
     log.info("GPU: %s (%.1f GB VRAM) | Turing: %s", gpu_name, vram_gb, is_turing_gpu())
 
 MODEL_REGISTRY = {
-    "DreamLite-base (20 steps, high quality)": {
+    "DreamLite-base (28 steps, high quality)": {
         "path": "models/DreamLite-base",
         "cls": DreamLitePipeline,
-        "default_steps": 20,
+        "default_steps": 28,
         "default_guidance": 3.5,
         "supports_cfg": True,
     },
@@ -395,7 +395,7 @@ def build_app() -> gr.Blocks:
                     steps_slider = gr.Slider(
                         minimum=1,
                         maximum=50,
-                        value=20,
+                        value=28,
                         step=1,
                         label="Inference Steps",
                     )
@@ -479,7 +479,7 @@ def build_app() -> gr.Blocks:
                     "A close-up of a fire-breathing dragon, cinematic shot",
                     None,
                     "832 × 1216 (2:3)",
-                    20,
+                    28,
                     3.5,
                     1.0,
                     123,

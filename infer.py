@@ -42,7 +42,7 @@ def parse_args():
         default="auto",
         choices=["auto", "float16", "bfloat16", "float32"],
     )
-    parser.add_argument("--num_inference_steps", type=int, default=20)
+    parser.add_argument("--num_inference_steps", type=int, default=28)
     parser.add_argument("--prompt", type=str, default="a dog running on the grass")
     parser.add_argument("--negative_prompt", type=str, default="")
     parser.add_argument("--image_path", type=str, default="")

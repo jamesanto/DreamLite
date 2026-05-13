@@ -359,7 +359,7 @@ class DreamLitePipeline(
         width: Optional[int] = None,
         guidance_scale: float = 7.5,
         image_guidance_scale: float = 1.0,
-        num_inference_steps: int = 20,
+        num_inference_steps: int = 28,
         sigmas: Optional[List[float]] = None,
         num_images_per_prompt: Optional[int] = 1,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
