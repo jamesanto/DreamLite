@@ -139,12 +139,17 @@ def main():
 
     print("Generating image...")
 
+    pbar = None
+
     def cli_step_callback(step: int, total: int, step_time: float):
-        pct = step * 100 // total
-        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
-        print(f"\r  [{bar}] {step}/{total} steps ({step_time:.2f}s/step)", end="", flush=True)
+        nonlocal pbar
+        if pbar is None:
+            from tqdm import tqdm
+            pbar = tqdm(total=total, desc="Denoising", unit="step", dynamic_ncols=True)
+        pbar.set_postfix({"s/step": f"{step_time:.2f}"})
+        pbar.update(1)
         if step == total:
-            print()
+            pbar.close()
 
     call_kwargs = {
         "prompt": prompt,

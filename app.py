@@ -16,6 +16,7 @@ import gradio as gr
 import torch
 import transformers.utils.logging as transformers_logging
 from PIL import Image
+from tqdm import tqdm
 
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
@@ -40,7 +41,9 @@ _parser.add_argument("--share", action="store_true", help="Create a public Gradi
 _parser.add_argument("--port", type=int, default=7863, help="Server port")
 _parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
 _parser.add_argument("--no-compile", action="store_true", help="Disable CUDA graph acceleration (use eager mode)")
-_parser.add_argument("--use-inductor", action="store_true", help="Use torch.compile inductor backend instead of CUDA graphs")
+_parser.add_argument(
+    "--use-inductor", action="store_true", help="Use torch.compile inductor backend instead of CUDA graphs"
+)
 _parser.add_argument(
     "--vae-tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions, adds latency)"
 )
@@ -152,6 +155,7 @@ def _prepare_edit_image(img: Image.Image) -> tuple[Image.Image, int, int, tuple[
 
     return padded, bucket_w, bucket_h, crop_box
 
+
 # ─── State ───────────────────────────────────────────────────────────────────
 
 _pipeline_cache: dict = {}
@@ -164,7 +168,7 @@ def _parse_resolution(res_str: str) -> tuple[int, int]:
     return int(parts[0].strip()), int(parts[1].strip())
 
 
-def _load_pipeline(model_name: str, use_4bit: bool = True):
+def _load_pipeline(model_name: str):
     global _active_model
 
     if model_name in _pipeline_cache:
@@ -233,7 +237,6 @@ def generate(
     guidance_scale: float,
     image_guidance_scale: float,
     seed: int,
-    use_4bit: bool,
     progress=gr.Progress(),
 ):
     global _cancel_requested
@@ -249,8 +252,8 @@ def generate(
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
     progress(0, desc="Loading model...")
-    yield None, "Loading model..."
-    pipe = _load_pipeline(model_name, use_4bit=use_4bit)
+    yield None
+    pipe = _load_pipeline(model_name)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
     width, height = _parse_resolution(resolution)
@@ -259,7 +262,10 @@ def generate(
         padded_img, width, height, crop_box = _prepare_edit_image(input_image)
         log.info(
             "Edit: input %d×%d → resized+padded to %d×%d (crop_box=%s)",
-            *input_image.size, width, height, crop_box,
+            *input_image.size,
+            width,
+            height,
+            crop_box,
         )
         input_image = padded_img
     else:
@@ -282,25 +288,27 @@ def generate(
         kwargs["guidance_scale"] = guidance_scale
         kwargs["image_guidance_scale"] = image_guidance_scale
 
+    pbar = tqdm(total=steps, desc="Denoising", unit="step", dynamic_ncols=True)
+
     def step_callback(step: int, total: int, step_time: float):
-        pct = step * 100 // total
-        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
-        log.info("  [%s] Step %d/%d (%.2fs/step)", bar, step, total, step_time)
+        pbar.set_postfix({"s/step": f"{step_time:.2f}"})
+        pbar.update(1)
         progress(step / total, desc=f"Step {step}/{total} ({step_time:.1f}s/step)")
 
     kwargs["callback_on_step_end"] = step_callback
     kwargs["interrupt_flag"] = lambda: _cancel_requested
 
     progress(0.05, desc="Encoding text...")
-    yield None, f"Generating (0/{steps} steps)..."
+    yield None
 
     t0 = time.perf_counter()
     output = pipe(**kwargs)
+    pbar.close()
     elapsed = time.perf_counter() - t0
 
     if _cancel_requested:
         log.info("Generation cancelled after %.1fs", elapsed)
-        yield None, "Cancelled."
+        yield None
         return
 
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
@@ -334,16 +342,9 @@ def generate(
 
     log.info("Image: %s mode=%s", result.size, result.mode)
 
-    import numpy as np
-
-    status = f"Done in {elapsed:.1f}s ({steps / elapsed:.1f} steps/s)"
-    if torch.cuda.is_available():
-        try:
-            status += f" | Peak: {torch.cuda.max_memory_allocated() / (1024**3):.1f} GB"
-        except Exception:
-            pass
-    progress(1.0, desc="Done!")
-    yield np.array(result), status
+    log.info("Done in %.1fs (%.1f steps/s)", elapsed, steps / elapsed)
+    progress(1.0, desc=f"Done in {elapsed:.1f}s")
+    yield result
 
 
 def on_model_change(model_name: str):
@@ -421,17 +422,12 @@ def build_app() -> gr.Blocks:
                         label="Seed",
                         precision=0,
                     )
-                    use_4bit_checkbox = gr.Checkbox(
-                        value=True,
-                        label="Quantize Text Encoder (8-bit, saves ~2 GB VRAM)",
-                    )
 
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
                 stop_btn = gr.Button("Stop", variant="stop", size="lg", visible=True)
 
             with gr.Column(scale=1):
                 output_image = gr.Image(label="Result", format="png")
-                status_text = gr.Textbox(label="Status", interactive=False, lines=1)
 
         # ─── Event bindings ──────────────────────────────────────────────
 
@@ -444,7 +440,6 @@ def build_app() -> gr.Blocks:
             guidance_slider,
             img_guidance_slider,
             seed_input,
-            use_4bit_checkbox,
         ]
 
         model_dropdown.change(
@@ -457,14 +452,14 @@ def build_app() -> gr.Blocks:
         gen_event = generate_btn.click(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image, status_text],
+            outputs=[output_image],
         )
 
         # Ctrl+Enter / submit from the prompt textbox
         submit_event = prompt_input.submit(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image, status_text],
+            outputs=[output_image],
         )
 
         # Stop button cancels the running generation
@@ -486,7 +481,6 @@ def build_app() -> gr.Blocks:
                     3.5,
                     1.0,
                     123,
-                    True,
                 ],
                 [
                     list(MODEL_REGISTRY.keys())[1],
@@ -497,7 +491,6 @@ def build_app() -> gr.Blocks:
                     1.0,
                     1.0,
                     42,
-                    True,
                 ],
             ],
             inputs=all_inputs,
