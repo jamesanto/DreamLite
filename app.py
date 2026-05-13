@@ -216,9 +216,12 @@ def generate(
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
 
     if torch.cuda.is_available():
-        peak = torch.cuda.max_memory_allocated() / (1024**3)
-        log.info("Peak VRAM: %.2f GB", peak)
-        torch.cuda.reset_peak_memory_stats()
+        try:
+            peak = torch.cuda.max_memory_allocated() / (1024**3)
+            log.info("Peak VRAM: %.2f GB", peak)
+            torch.cuda.reset_peak_memory_stats()
+        except Exception:
+            pass
 
     result = output.images[0]
     log.info("Output type: %s", type(result).__name__)

@@ -628,7 +628,11 @@ class DreamLitePipeline(
             _vram_current,
         )
 
-        self.maybe_free_model_hooks()
+        # Skip maybe_free_model_hooks() — it can crash when text encoder uses
+        # device_map="auto" with bitsandbytes quantization (accelerate hook cleanup
+        # on quantized layers triggers segfault on Windows).
+        if not self._text_encoder_quantized:
+            self.maybe_free_model_hooks()
 
         if not return_dict:
             return (image_out,)
