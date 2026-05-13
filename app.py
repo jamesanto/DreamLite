@@ -5,6 +5,7 @@ Supports both DreamLite-base (28-step, high fidelity) and DreamLite-mobile (4-st
 Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPUs.
 """
 
+import argparse
 import logging
 import time
 
@@ -22,6 +23,15 @@ from dreamlite.pipelines.dreamlite.optimize import (
     is_turing_gpu,
 )
 
+# ─── CLI Args (parsed early so they're available to configuration) ────────────
+
+_parser = argparse.ArgumentParser(description="DreamLite Gradio App")
+_parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
+_parser.add_argument("--port", type=int, default=7863, help="Server port")
+_parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
+_parser.add_argument("--no-compile", action="store_true", help="Disable torch.compile (avoids Triton requirement)")
+APP_ARGS = _parser.parse_args() if __name__ == "__main__" else _parser.parse_args([])
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
 logging.basicConfig(
@@ -33,6 +43,10 @@ log = logging.getLogger("dreamlite.app")
 
 diffusers_logging.set_verbosity_warning()
 transformers_logging.set_verbosity_warning()
+
+# Suppress noisy inductor/dynamo warnings (e.g. "Not enough SMs to use max_autotune_gemm")
+logging.getLogger("torch._inductor").setLevel(logging.ERROR)
+logging.getLogger("torch._dynamo").setLevel(logging.ERROR)
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -126,9 +140,10 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
         pipe = pipe.to(DEVICE)
 
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
+        use_compile = not APP_ARGS.no_compile
         pipe.optimize(
             offload_text_encoder=True,
-            compile_unet_model=True,
+            compile_unet_model=use_compile,
             fuse_qkv=False,
             enable_vae_tiling=True,
         )
@@ -161,6 +176,7 @@ def generate(
     image_guidance_scale: float,
     seed: int,
     use_4bit: bool,
+    progress=gr.Progress(),
 ):
     if not prompt.strip():
         raise gr.Error("Please enter a prompt.")
@@ -171,6 +187,7 @@ def generate(
     log.info("Prompt: %s", prompt[:80] + ("..." if len(prompt) > 80 else ""))
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
+    progress(0, desc="Loading model...")
     pipe = _load_pipeline(model_name, use_4bit=use_4bit)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
@@ -193,10 +210,12 @@ def generate(
         kwargs["guidance_scale"] = guidance_scale
         kwargs["image_guidance_scale"] = image_guidance_scale
 
+    progress(0.1, desc=f"Generating ({steps} steps)...")
     t0 = time.perf_counter()
     result = pipe(**kwargs).images[0]
     elapsed = time.perf_counter() - t0
 
+    progress(0.95, desc="Finalizing...")
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
 
     if torch.cuda.is_available():
@@ -207,6 +226,7 @@ def generate(
     if result.size != (width, height):
         result = result.resize((width, height), resample=Image.LANCZOS)
 
+    progress(1.0, desc="Done!")
     return result
 
 
@@ -360,14 +380,13 @@ def build_app() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="DreamLite Gradio App")
-    parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
-    parser.add_argument("--port", type=int, default=7863, help="Server port")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
-    args = parser.parse_args()
-
-    log.info("Starting DreamLite app on %s:%d", args.host, args.port)
+    if APP_ARGS.no_compile:
+        log.info("torch.compile disabled via --no-compile")
+    log.info("Starting DreamLite app on %s:%d", APP_ARGS.host, APP_ARGS.port)
     app = build_app()
-    app.launch(server_name=args.host, server_port=args.port, share=args.share, theme=gr.themes.Soft())
+    app.launch(
+        server_name=APP_ARGS.host,
+        server_port=APP_ARGS.port,
+        share=APP_ARGS.share,
+        theme=gr.themes.Soft(),
+    )
