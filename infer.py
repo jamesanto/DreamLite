@@ -61,6 +61,8 @@ def parse_args():
     parser.add_argument(
         "--no_optimize", action="store_true", help="Disable all pipeline optimizations (compile, fuse, offload)"
     )
+    parser.add_argument("--no_compile", action="store_true", help="Disable torch.compile only")
+    parser.add_argument("--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)")
 
     return parser.parse_args()
 
@@ -110,13 +112,14 @@ def main():
 
     # Apply speed optimizations
     if not args.no_optimize:
+        use_compile = not args.no_compile
         pipeline.optimize(
             offload_text_encoder=True,
-            compile_unet_model=True,
+            compile_unet_model=use_compile,
             fuse_qkv=False,
-            enable_vae_tiling=True,
+            enable_vae_tiling=args.vae_tiling,
         )
-        print("Pipeline optimized (SDPA + compile + vae_tiling).")
+        print(f"Pipeline optimized (SDPA{' + compile' if use_compile else ''}{' + vae_tiling' if args.vae_tiling else ''}).")
 
     # Setup Data
     prompt = args.prompt

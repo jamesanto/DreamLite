@@ -30,6 +30,7 @@ _parser.add_argument("--share", action="store_true", help="Create a public Gradi
 _parser.add_argument("--port", type=int, default=7863, help="Server port")
 _parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
 _parser.add_argument("--no-compile", action="store_true", help="Disable torch.compile (avoids Triton requirement)")
+_parser.add_argument("--vae-tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions, adds latency)")
 APP_ARGS = _parser.parse_args() if __name__ == "__main__" else _parser.parse_args([])
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
@@ -145,7 +146,7 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
             offload_text_encoder=True,
             compile_unet_model=use_compile,
             fuse_qkv=False,
-            enable_vae_tiling=True,
+            enable_vae_tiling=APP_ARGS.vae_tiling,
         )
 
     pipe.set_progress_bar_config(disable=True)
