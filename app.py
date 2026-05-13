@@ -136,11 +136,13 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
         from transformers import Qwen3VLForConditionalGeneration
 
         log.info("Loading %s with 8-bit text encoder...", model_name)
+        vram_bytes = torch.cuda.get_device_properties(0).total_memory
         text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
             config["path"],
             subfolder="text_encoder",
             quantization_config=get_8bit_quantization_config(),
             device_map="auto",
+            max_memory={0: int(vram_bytes * 0.95), "cpu": "16GiB"},
         )
         load_kwargs["text_encoder"] = text_encoder
     else:

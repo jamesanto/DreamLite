@@ -62,7 +62,9 @@ def parse_args():
         "--no_optimize", action="store_true", help="Disable all pipeline optimizations (compile, fuse, offload)"
     )
     parser.add_argument("--no_compile", action="store_true", help="Disable torch.compile only")
-    parser.add_argument("--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)")
+    parser.add_argument(
+        "--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)"
+    )
 
     return parser.parse_args()
 
@@ -95,6 +97,7 @@ def main():
             subfolder="text_encoder",
             quantization_config=get_8bit_quantization_config(),
             device_map="auto",
+            max_memory={0: int(torch.cuda.get_device_properties(0).total_memory * 0.95), "cpu": "16GiB"},
         )
         load_kwargs["text_encoder"] = text_encoder
     elif use_4bit and not _BNB_AVAILABLE:
@@ -119,7 +122,9 @@ def main():
             fuse_qkv=False,
             enable_vae_tiling=args.vae_tiling,
         )
-        print(f"Pipeline optimized (SDPA{' + compile' if use_compile else ''}{' + vae_tiling' if args.vae_tiling else ''}).")
+        print(
+            f"Pipeline optimized (SDPA{' + compile' if use_compile else ''}{' + vae_tiling' if args.vae_tiling else ''})."
+        )
 
     # Setup Data
     prompt = args.prompt
