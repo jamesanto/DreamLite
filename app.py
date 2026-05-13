@@ -28,8 +28,10 @@ from dreamlite.pipelines.dreamlite.optimize import (
 # Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
 faulthandler.enable()
 
-# Disable Gradio analytics — its pandas/pyarrow usage segfaults on Windows
-os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
+# Prevent pandas from using pyarrow string backend — it segfaults on Windows
+# when Gradio's queueing.py calls compute_analytics_summary → DataFrame.
+# This MUST be set before pandas is imported (by gradio).
+os.environ["PANDAS_FUTURE_INFER_STRING"] = "0"
 
 # ─── CLI Args (parsed early so they're available to configuration) ────────────
 
