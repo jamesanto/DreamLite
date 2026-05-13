@@ -35,6 +35,7 @@ from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
 
 from ...models.unets.unet_2d_condition_mobile import DreamLiteUNetModel
+from .optimize import compile_unet, offload_to_cpu, move_to_device
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -143,6 +144,44 @@ class DreamLitePipeline(
             
         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor * 2)
         self.default_sample_size = 128
+        self._offload_text_encoder = False
+        self._unet_compiled = False
+
+    def optimize(
+        self,
+        offload_text_encoder: bool = True,
+        compile_unet_model: bool = True,
+        fuse_qkv: bool = True,
+        enable_vae_tiling: bool = True,
+    ) -> "DreamLitePipeline":
+        """
+        Apply speed/VRAM optimizations for low-VRAM GPUs (e.g. RTX 2060 6GB).
+
+        Args:
+            offload_text_encoder: Move text encoder to CPU after encoding to free VRAM
+                for the UNet denoising loop.
+            compile_unet_model: Apply torch.compile to UNet for kernel fusion.
+            fuse_qkv: Fuse Q/K/V attention projections into a single matmul.
+            enable_vae_tiling: Enable tiled VAE decoding to prevent OOM during decode.
+
+        Returns:
+            self (for method chaining)
+        """
+        self._offload_text_encoder = offload_text_encoder
+
+        if fuse_qkv:
+            self.unet.fuse_qkv_projections()
+            logger.info("Fused QKV projections in UNet.")
+
+        if compile_unet_model and not self._unet_compiled:
+            self.unet = compile_unet(self.unet)
+            self._unet_compiled = True
+
+        if enable_vae_tiling and hasattr(self.vae, "enable_tiling"):
+            self.vae.enable_tiling()
+            logger.info("VAE tiling enabled.")
+
+        return self
 
     @staticmethod
     def _extract_masked_hidden(hidden_states: torch.Tensor, mask: torch.Tensor) -> List[torch.Tensor]:
@@ -287,7 +326,7 @@ class DreamLitePipeline(
         width: Optional[int] = None,
         guidance_scale: float = 7.5,
         image_guidance_scale: float = 1.0,
-        num_inference_steps: int = 30,
+        num_inference_steps: int = 20,
         sigmas: Optional[List[float]] = None,
         num_images_per_prompt: Optional[int] = 1,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
@@ -388,6 +427,10 @@ class DreamLitePipeline(
             )
             uncond_image_latents = torch.zeros_like(latents)
 
+        # 6b. Offload text encoder to CPU to free VRAM for the UNet loop
+        if self._offload_text_encoder:
+            offload_to_cpu(self.text_encoder)
+
         # 7. Denoising Loop
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
@@ -448,6 +491,10 @@ class DreamLitePipeline(
             latents = (latents / self.vae.config.scaling_factor) + shift_factor
             image_out = self.vae.decode(latents, return_dict=False)[0]
             image_out = self.image_processor.postprocess(image_out, output_type=output_type)
+
+        # 8b. Restore text encoder to GPU for next call if it was offloaded
+        if self._offload_text_encoder:
+            move_to_device(self.text_encoder, device, dtype)
 
         self.maybe_free_model_hooks()
 

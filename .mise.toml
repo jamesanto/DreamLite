@@ -1,0 +1,39 @@
+[tools]
+python = "3.12"
+uv = "latest"
+
+[env]
+PYTHONDONTWRITEBYTECODE = "1"
+UV_LINK_MODE = "copy"
+
+[tasks.install]
+description = "Install project dependencies via uv"
+run = "uv sync"
+
+[tasks.install-dev]
+description = "Install project with dev dependencies"
+run = "uv sync --extra dev"
+
+[tasks.app]
+description = "Launch the DreamLite Gradio web app"
+run = "uv run python app.py"
+
+[tasks.app-share]
+description = "Launch the Gradio app with a public share link"
+run = "uv run python app.py --share"
+
+[tasks.infer]
+description = "Run CLI inference (pass args after --)"
+run = "uv run python infer.py"
+
+[tasks.lint]
+description = "Run ruff linter"
+run = "uv run ruff check ."
+
+[tasks.format]
+description = "Format code with ruff"
+run = "uv run ruff format ."
+
+[tasks.test]
+description = "Run test suite"
+run = "uv run pytest -q"

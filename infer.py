@@ -18,20 +18,30 @@ import torch
 from PIL import Image
 from diffusers.utils import load_image
 
-from dreamlite import DreamLitePipeline 
+from dreamlite import DreamLitePipeline
+from dreamlite.pipelines.dreamlite.optimize import (
+    get_4bit_quantization_config,
+    get_optimal_dtype,
+    is_turing_gpu,
+    _BNB_AVAILABLE,
+)
+
 warnings.filterwarnings("ignore")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="DreamLite Inference Script")
-    
+
     # Model & Structure
     parser.add_argument("--model_id", type=str, default="models/DreamLite-base")
-        
+
     # Inference Params
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--weight_dtype", type=str, default="bfloat16", choices=["float16", "bfloat16", "float32"])
-    parser.add_argument("--num_inference_steps", type=int, default=28)
+    parser.add_argument(
+        "--weight_dtype", type=str, default="auto",
+        choices=["auto", "float16", "bfloat16", "float32"],
+    )
+    parser.add_argument("--num_inference_steps", type=int, default=20)
     parser.add_argument("--prompt", type=str, default="a dog running on the grass")
     parser.add_argument("--negative_prompt", type=str, default="")
     parser.add_argument("--image_path", type=str, default="")
@@ -39,26 +49,62 @@ def parse_args():
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--guidance_scale", type=float, default=3.5)
     parser.add_argument("--image_guidance_scale", type=float, default=1.0)
-        
+
+    # Optimization flags
+    parser.add_argument("--quantize_4bit", action="store_true", default=True,
+                        help="Load text encoder in 4-bit (requires bitsandbytes)")
+    parser.add_argument("--no_quantize", action="store_true",
+                        help="Disable 4-bit quantization")
+    parser.add_argument("--no_optimize", action="store_true",
+                        help="Disable all pipeline optimizations (compile, fuse, offload)")
+
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
-        
-    weight_dtype = {
-        "float16": torch.float16,
-        "bfloat16": torch.bfloat16,
-        "float32": torch.float32
-    }[args.weight_dtype]
+
+    # Resolve dtype: auto-detect optimal dtype for the GPU
+    if args.weight_dtype == "auto":
+        weight_dtype = get_optimal_dtype()
+        arch_name = "Turing (fp16)" if is_turing_gpu() else "Ampere+ (bf16)"
+        print(f"Auto-detected GPU architecture: {arch_name}, using {weight_dtype}")
+    else:
+        weight_dtype = {
+            "float16": torch.float16,
+            "bfloat16": torch.bfloat16,
+            "float32": torch.float32,
+        }[args.weight_dtype]
+
+    # Build loading kwargs
+    load_kwargs = {"torch_dtype": weight_dtype}
+
+    use_4bit = args.quantize_4bit and not args.no_quantize
+    if use_4bit and _BNB_AVAILABLE:
+        quantization_config = get_4bit_quantization_config(compute_dtype=weight_dtype)
+        load_kwargs["quantization_config"] = quantization_config
+        print("Loading text encoder with 4-bit NF4 quantization.")
+    elif use_4bit and not _BNB_AVAILABLE:
+        print("Warning: bitsandbytes not installed; loading without quantization.")
 
     print(f"Loading diffusers pipeline from: {args.model_id}")
-    
-    pipeline = DreamLitePipeline.from_pretrained(
-        args.model_id,
-        torch_dtype=weight_dtype,
-    ).to(args.device)
-    
-    # 3. Setup Data
+    pipeline = DreamLitePipeline.from_pretrained(args.model_id, **load_kwargs)
+
+    # Move to device (4-bit models handle device placement internally via accelerate)
+    if not (use_4bit and _BNB_AVAILABLE):
+        pipeline = pipeline.to(args.device)
+
+    # Apply speed optimizations
+    if not args.no_optimize:
+        pipeline.optimize(
+            offload_text_encoder=True,
+            compile_unet_model=True,
+            fuse_qkv=True,
+            enable_vae_tiling=True,
+        )
+        print("Pipeline optimized (offload + compile + fuse_qkv + vae_tiling).")
+
+    # Setup Data
     prompt = args.prompt
     input_image = load_image(args.image_path) if args.image_path else None
     if input_image is not None:
@@ -69,8 +115,9 @@ def main():
     print("Generating image...")
     image = pipeline(
         prompt=prompt,
+        negative_prompt=args.negative_prompt,
         image=input_image,
-        height=height, 
+        height=height,
         width=width,
         guidance_scale=args.guidance_scale,
         image_guidance_scale=args.image_guidance_scale,
@@ -80,10 +127,11 @@ def main():
 
     if image.size != (width, height):
         image = image.resize((width, height), Image.Resampling.LANCZOS)
-    
+
     out_path = f"{prompt.replace(' ', '_')}.png"
     image.save(out_path)
     print(f"Image saved to {out_path}")
+
 
 if __name__ == "__main__":
     main()
