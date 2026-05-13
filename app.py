@@ -265,7 +265,7 @@ def generate(
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
     progress(0, desc="Loading model...")
-    yield None
+    yield "Loading model...", None
     pipe = _load_pipeline(model_name)
 
     if seed < 0:
@@ -304,7 +304,8 @@ def generate(
     config = MODEL_REGISTRY[model_name]
     if config["supports_cfg"]:
         kwargs["guidance_scale"] = guidance_scale
-        kwargs["image_guidance_scale"] = image_guidance_scale
+        if input_image is not None:
+            kwargs["image_guidance_scale"] = image_guidance_scale
 
     pbar = tqdm(total=steps, desc="Denoising", unit="step", dynamic_ncols=True)
 
@@ -317,7 +318,7 @@ def generate(
     kwargs["interrupt_flag"] = lambda: _cancel_requested
 
     progress(0.05, desc="Encoding text...")
-    yield None
+    yield "Generating...", None
 
     t0 = time.perf_counter()
     output = pipe(**kwargs)
@@ -326,7 +327,7 @@ def generate(
 
     if _cancel_requested:
         log.info("Generation cancelled after %.1fs", elapsed)
-        yield None
+        yield "Cancelled.", None
         return
 
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
@@ -367,32 +368,35 @@ def generate(
         result = result.crop(crop_box)
         log.info("Cropped padding: %s → %s", (width, height), result.size)
 
-    yield result
+    yield f"Denoised in {elapsed:.1f}s", result
 
     if restore_face and original_input is not None:
         progress(0.85, desc="Restoring face...")
+        yield "Restoring face...", result
         log.info("Restoring original face...")
         t_face = time.perf_counter()
         swapped = swap_face(original_input, result)
         if swapped is not None:
             result = swapped
             log.info("Face restored in %.1fs", time.perf_counter() - t_face)
-            yield result
+            yield "Face restored", result
         else:
             log.info("No face detected — skipping face restore")
 
     if upscale_4x:
         progress(0.9, desc="Upscaling 4x...")
+        yield "Upscaling 4x...", result
         log.info("Upscaling %s with 4x-UltraSharp...", result.size)
         t_up = time.perf_counter()
         result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE, tile_size=1024)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
-        yield result
+        yield f"Done — {result.size[0]}×{result.size[1]}", result
 
     log.info("Image: %s mode=%s", result.size, result.mode)
 
     log.info("Done in %.1fs (%.1f steps/s)", elapsed, steps / elapsed)
     progress(1.0, desc=f"Done in {elapsed:.1f}s")
+    yield f"Done in {elapsed:.1f}s — {result.size[0]}×{result.size[1]}", result
 
 
 def on_model_change(model_name: str):
@@ -483,6 +487,12 @@ def build_app() -> gr.Blocks:
                 stop_btn = gr.Button("Stop", variant="stop", size="lg", visible=True)
 
             with gr.Column(scale=1):
+                progress_text = gr.Textbox(
+                    label="Status",
+                    interactive=False,
+                    lines=1,
+                    max_lines=1,
+                )
                 output_image = gr.Image(label="Result", format="png")
 
         # ─── Event bindings ──────────────────────────────────────────────
@@ -510,14 +520,14 @@ def build_app() -> gr.Blocks:
         gen_event = generate_btn.click(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image],
+            outputs=[progress_text, output_image],
         )
 
         # Ctrl+Enter / submit from the prompt textbox
         submit_event = prompt_input.submit(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image],
+            outputs=[progress_text, output_image],
         )
 
         # Stop button cancels the running generation

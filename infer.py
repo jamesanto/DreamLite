@@ -162,13 +162,14 @@ def main():
         "height": height,
         "width": width,
         "guidance_scale": args.guidance_scale,
-        "image_guidance_scale": args.image_guidance_scale,
         "num_inference_steps": args.num_inference_steps,
         "generator": torch.Generator("cpu").manual_seed(
             args.seed if args.seed >= 0 else torch.randint(0, 2**32, (1,)).item()
         ),
         "callback_on_step_end": cli_step_callback,
     }
+    if input_image is not None:
+        call_kwargs["image_guidance_scale"] = args.image_guidance_scale
     if crop_box is not None:
         call_kwargs["bucket"] = -1
 
