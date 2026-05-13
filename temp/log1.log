@@ -1,0 +1,40 @@
+╭─shado@Shadow   DreamLite  main ≡   2m 29.839s                                                                     pwsh 100    22:00:50 ╰─❯❯❯ mise run app
+[app] $ uv run python app.py
+22:01:24 INFO Device: cpu | Dtype: torch.float32
+22:01:24 INFO Starting DreamLite app on 127.0.0.1:7863
+C:\Users\shado\Documents\DreamLite\app.py:210: UserWarning: The parameters have been moved from the Blocks constructor to the launch() method in Gradio 6.0: theme. Please pass these parameters to launch() instead.
+  with gr.Blocks(
+* Running on local URL:  http://127.0.0.1:7863
+22:01:25 INFO HTTP Request: GET http://127.0.0.1:7863/gradio_api/startup-events "HTTP/1.1 200 OK"
+22:01:25 INFO HTTP Request: HEAD http://127.0.0.1:7863/ "HTTP/1.1 200 OK"
+* To create a public link, set `share=True` in `launch()`.
+22:01:26 INFO HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+22:01:39 INFO ────────────────────────────────────────────────────────────
+22:01:39 INFO Task: generate | Model: DreamLite-base (20 steps, high quality)
+22:01:39 INFO Prompt: astronaut
+22:01:39 INFO Steps: 2 | Guidance: 3.5 | Seed: 42
+22:01:39 INFO Loading DreamLite-base (20 steps, high quality) (full precision)...
+22:01:49 INFO Pipeline ready in 9.7s
+22:01:49 INFO Resolution: 1024 × 1024
+22:02:51 INFO
+╔══════════════════════════════════════════════════════════╗
+║              DreamLite Profiling Summary                 ║
+╠══════════════════════════════════════════════════════════╣
+║ Task: generate    Resolution: 1024×1024  CFG batch: 2     ║
+║ Steps: 2         Dtype: float32    Device: cpu         ║
+╠══════════════════════════════════════════════════════════╣
+║ Phase                          Time                      ║
+║ ─────────────────────────────  ─────────                 ║
+║ Text Encode (Qwen3-VL)           4.07s                    ║
+║ Text Offload → CPU               0.00s                    ║
+║ UNet Loop ( 2 steps)             56.53s                    ║
+║   ├─ First step                31.495s                    ║
+║   ├─ Last step                 25.030s                    ║
+║   └─ Avg per step              28.265s                    ║
+║ VAE Decode                       2.14s                    ║
+║ Text Reload → GPU                0.00s                    ║
+╠══════════════════════════════════════════════════════════╣
+║ TOTAL                           62.76s                    ║
+║ Peak VRAM: 0.00 GB  Current: 0.00 GB                  ║
+╚══════════════════════════════════════════════════════════╝
+22:02:51 INFO Generated in 62.79s (0.03 steps/s)
