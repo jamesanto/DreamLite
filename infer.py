@@ -22,7 +22,7 @@ from PIL import Image
 from dreamlite import DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
     _BNB_AVAILABLE,
-    get_4bit_quantization_config,
+    get_8bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
 )
@@ -87,11 +87,11 @@ def main():
     if use_4bit and _BNB_AVAILABLE:
         from transformers import Qwen3VLForConditionalGeneration
 
-        print("Loading text encoder with 4-bit NF4 quantization...")
+        print("Loading text encoder with 8-bit quantization...")
         text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
             args.model_id,
             subfolder="text_encoder",
-            quantization_config=get_4bit_quantization_config(compute_dtype=weight_dtype),
+            quantization_config=get_8bit_quantization_config(),
             device_map="auto",
         )
         load_kwargs["text_encoder"] = text_encoder

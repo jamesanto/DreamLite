@@ -43,6 +43,23 @@ def get_optimal_dtype() -> torch.dtype:
     return torch.bfloat16
 
 
+def get_8bit_quantization_config() -> "BitsAndBytesConfig":
+    """
+    Build a BitsAndBytesConfig for 8-bit quantization of the text encoder.
+
+    8-bit is the sweet spot for 6GB VRAM: nearly lossless quality,
+    faster dequant than 4-bit, and still fits comfortably.
+    """
+    if not _BNB_AVAILABLE:
+        raise ImportError(
+            "bitsandbytes is required for quantization. "
+            "Install it with: pip install bitsandbytes"
+        )
+    return BitsAndBytesConfig(
+        load_in_8bit=True,
+    )
+
+
 def get_4bit_quantization_config(compute_dtype: Optional[torch.dtype] = None) -> "BitsAndBytesConfig":
     """
     Build a BitsAndBytesConfig for 4-bit NF4 quantization of the text encoder.

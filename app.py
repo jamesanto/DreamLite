@@ -15,6 +15,7 @@ from PIL import Image
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
     _BNB_AVAILABLE,
+    get_8bit_quantization_config,
     get_4bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
@@ -100,11 +101,11 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     if quantized:
         from transformers import Qwen3VLForConditionalGeneration
 
-        log.info("Loading %s with 4-bit text encoder...", model_name)
+        log.info("Loading %s with 8-bit text encoder...", model_name)
         text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
             config["path"],
             subfolder="text_encoder",
-            quantization_config=get_4bit_quantization_config(compute_dtype=DTYPE),
+            quantization_config=get_8bit_quantization_config(),
             device_map="auto",
         )
         load_kwargs["text_encoder"] = text_encoder
@@ -280,7 +281,7 @@ def build_app() -> gr.Blocks:
                     )
                     use_4bit_checkbox = gr.Checkbox(
                         value=True,
-                        label="4-bit Text Encoder (saves ~3 GB VRAM)",
+                        label="Quantize Text Encoder (8-bit, saves ~2 GB VRAM)",
                     )
 
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
