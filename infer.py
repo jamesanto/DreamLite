@@ -130,6 +130,14 @@ def main():
         width, height = args.width, args.height
 
     print("Generating image...")
+
+    def cli_step_callback(step: int, total: int, step_time: float):
+        pct = step * 100 // total
+        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
+        print(f"\r  [{bar}] {step}/{total} steps ({step_time:.2f}s/step)", end="", flush=True)
+        if step == total:
+            print()
+
     image = pipeline(
         prompt=prompt,
         negative_prompt=args.negative_prompt,
@@ -140,6 +148,7 @@ def main():
         image_guidance_scale=args.image_guidance_scale,
         num_inference_steps=args.num_inference_steps,
         generator=torch.Generator("cpu").manual_seed(42),
+        callback_on_step_end=cli_step_callback,
     ).images[0]
 
     if image.size != (width, height):

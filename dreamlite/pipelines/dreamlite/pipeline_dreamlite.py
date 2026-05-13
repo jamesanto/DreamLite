@@ -371,6 +371,8 @@ class DreamLitePipeline(
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
         bucket: int = 0,
+        callback_on_step_end: Optional[callable] = None,
+        interrupt_flag: Optional[callable] = None,
     ):
         # 1. Init pipeline parameters
         height = height or self.default_sample_size * self.vae_scale_factor
@@ -542,6 +544,13 @@ class DreamLitePipeline(
 
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
+
+                if callback_on_step_end is not None:
+                    callback_on_step_end(i + 1, num_inference_steps, _step_times[-1])
+
+                if interrupt_flag is not None and interrupt_flag():
+                    logger.info("Generation interrupted at step %d/%d", i + 1, num_inference_steps)
+                    break
 
                 if XLA_AVAILABLE:
                     xm.mark_step()

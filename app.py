@@ -106,6 +106,7 @@ RESOLUTIONS = [
 
 _pipeline_cache: dict = {}
 _active_model: str | None = None
+_cancel_requested: bool = False
 
 
 def _parse_resolution(res_str: str) -> tuple[int, int]:
@@ -181,6 +182,14 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
 # ─── Inference ───────────────────────────────────────────────────────────────
 
 
+def _cancel_generation():
+    """Called when the user clicks Stop."""
+    global _cancel_requested
+    _cancel_requested = True
+    log.info("Cancel requested by user.")
+    return gr.update(interactive=False, value="Stopping...")
+
+
 def generate(
     model_name: str,
     prompt: str,
@@ -192,6 +201,9 @@ def generate(
     seed: int,
     use_4bit: bool,
 ):
+    global _cancel_requested
+    _cancel_requested = False
+
     if not prompt.strip():
         raise gr.Error("Please enter a prompt.")
 
@@ -201,6 +213,7 @@ def generate(
     log.info("Prompt: %s", prompt[:80] + ("..." if len(prompt) > 80 else ""))
     log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
 
+    yield None, "Loading model..."
     pipe = _load_pipeline(model_name, use_4bit=use_4bit)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
@@ -223,9 +236,24 @@ def generate(
         kwargs["guidance_scale"] = guidance_scale
         kwargs["image_guidance_scale"] = image_guidance_scale
 
+    def step_callback(step: int, total: int, step_time: float):
+        pct = step * 100 // total
+        bar = "█" * (pct // 5) + "░" * (20 - pct // 5)
+        log.info("  [%s] Step %d/%d (%.2fs/step)", bar, step, total, step_time)
+
+    kwargs["callback_on_step_end"] = step_callback
+    kwargs["interrupt_flag"] = lambda: _cancel_requested
+
+    yield None, f"Generating (0/{steps} steps)..."
+
     t0 = time.perf_counter()
     output = pipe(**kwargs)
     elapsed = time.perf_counter() - t0
+
+    if _cancel_requested:
+        log.info("Generation cancelled after %.1fs", elapsed)
+        yield None, "Cancelled."
+        return
 
     log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
 
@@ -240,7 +268,6 @@ def generate(
     result = output.images[0]
     log.info("Output type: %s", type(result).__name__)
 
-    # Ensure output is a valid RGB PIL Image for Gradio
     if not isinstance(result, Image.Image):
         import numpy as np
 
@@ -257,7 +284,13 @@ def generate(
 
     import numpy as np
 
-    return np.array(result)
+    status = f"Done in {elapsed:.1f}s ({steps / elapsed:.1f} steps/s)"
+    if torch.cuda.is_available():
+        try:
+            status += f" | Peak: {torch.cuda.max_memory_allocated() / (1024**3):.1f} GB"
+        except Exception:
+            pass
+    yield np.array(result), status
 
 
 def on_model_change(model_name: str):
@@ -341,9 +374,11 @@ def build_app() -> gr.Blocks:
                     )
 
                 generate_btn = gr.Button("Generate", variant="primary", size="lg")
+                stop_btn = gr.Button("Stop", variant="stop", size="lg", visible=True)
 
             with gr.Column(scale=1):
                 output_image = gr.Image(label="Result", format="png")
+                status_text = gr.Textbox(label="Status", interactive=False, lines=1)
 
         # ─── Event bindings ──────────────────────────────────────────────
 
@@ -366,17 +401,25 @@ def build_app() -> gr.Blocks:
         )
 
         # Button click
-        generate_btn.click(
+        gen_event = generate_btn.click(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image],
+            outputs=[output_image, status_text],
         )
 
         # Ctrl+Enter / submit from the prompt textbox
-        prompt_input.submit(
+        submit_event = prompt_input.submit(
             fn=generate,
             inputs=all_inputs,
-            outputs=[output_image],
+            outputs=[output_image, status_text],
+        )
+
+        # Stop button cancels the running generation
+        stop_btn.click(
+            fn=_cancel_generation,
+            inputs=None,
+            outputs=[stop_btn],
+            cancels=[gen_event, submit_event],
         )
 
         gr.Examples(
