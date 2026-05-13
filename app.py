@@ -98,8 +98,15 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
 
     quantized = use_4bit and _BNB_AVAILABLE and DEVICE == "cuda"
     if quantized:
-        load_kwargs["quantization_config"] = get_4bit_quantization_config(compute_dtype=DTYPE)
-        log.info("Loading %s with 4-bit quantization...", model_name)
+        from transformers import Qwen3VLForConditionalGeneration
+        log.info("Loading %s with 4-bit text encoder...", model_name)
+        text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
+            config["path"],
+            subfolder="text_encoder",
+            quantization_config=get_4bit_quantization_config(compute_dtype=DTYPE),
+            torch_dtype=DTYPE,
+        )
+        load_kwargs["text_encoder"] = text_encoder
     else:
         log.info("Loading %s (full precision)...", model_name)
 

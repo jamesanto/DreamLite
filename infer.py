@@ -14,16 +14,17 @@
 
 import argparse
 import warnings
+
 import torch
-from PIL import Image
 from diffusers.utils import load_image
+from PIL import Image
 
 from dreamlite import DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
+    _BNB_AVAILABLE,
     get_4bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
-    _BNB_AVAILABLE,
 )
 
 warnings.filterwarnings("ignore")
@@ -38,7 +39,9 @@ def parse_args():
     # Inference Params
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument(
-        "--weight_dtype", type=str, default="auto",
+        "--weight_dtype",
+        type=str,
+        default="auto",
         choices=["auto", "float16", "bfloat16", "float32"],
     )
     parser.add_argument("--num_inference_steps", type=int, default=20)
@@ -51,12 +54,13 @@ def parse_args():
     parser.add_argument("--image_guidance_scale", type=float, default=1.0)
 
     # Optimization flags
-    parser.add_argument("--quantize_4bit", action="store_true", default=True,
-                        help="Load text encoder in 4-bit (requires bitsandbytes)")
-    parser.add_argument("--no_quantize", action="store_true",
-                        help="Disable 4-bit quantization")
-    parser.add_argument("--no_optimize", action="store_true",
-                        help="Disable all pipeline optimizations (compile, fuse, offload)")
+    parser.add_argument(
+        "--quantize_4bit", action="store_true", default=True, help="Load text encoder in 4-bit (requires bitsandbytes)"
+    )
+    parser.add_argument("--no_quantize", action="store_true", help="Disable 4-bit quantization")
+    parser.add_argument(
+        "--no_optimize", action="store_true", help="Disable all pipeline optimizations (compile, fuse, offload)"
+    )
 
     return parser.parse_args()
 
@@ -81,9 +85,16 @@ def main():
 
     use_4bit = args.quantize_4bit and not args.no_quantize
     if use_4bit and _BNB_AVAILABLE:
-        quantization_config = get_4bit_quantization_config(compute_dtype=weight_dtype)
-        load_kwargs["quantization_config"] = quantization_config
-        print("Loading text encoder with 4-bit NF4 quantization.")
+        from transformers import Qwen3VLForConditionalGeneration
+
+        print("Loading text encoder with 4-bit NF4 quantization...")
+        text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
+            args.model_id,
+            subfolder="text_encoder",
+            quantization_config=get_4bit_quantization_config(compute_dtype=weight_dtype),
+            torch_dtype=weight_dtype,
+        )
+        load_kwargs["text_encoder"] = text_encoder
     elif use_4bit and not _BNB_AVAILABLE:
         print("Warning: bitsandbytes not installed; loading without quantization.")
 
