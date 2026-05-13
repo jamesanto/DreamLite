@@ -386,7 +386,7 @@ def generate(
     if upscale_4x:
         progress(0.9, desc="Upscaling 4x...")
         yield "Upscaling 4x...", result
-        log.info("Upscaling %s with 4x-UltraSharp...", result.size)
+        log.info("Upscaling %s with 4x SPAN...", result.size)
         t_up = time.perf_counter()
         result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
@@ -476,7 +476,7 @@ def build_app() -> gr.Blocks:
                     )
                     upscale_checkbox = gr.Checkbox(
                         value=True,
-                        label="4x Upscale (UltraSharp)",
+                        label="4x Upscale (SPAN)",
                     )
                     face_restore_checkbox = gr.Checkbox(
                         value=True,

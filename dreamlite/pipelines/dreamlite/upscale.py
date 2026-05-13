@@ -1,8 +1,9 @@
 """
-4x-UltraSharp upscaler with tiled inference for low-VRAM GPUs.
+4x SPAN upscaler with tiled inference for low-VRAM GPUs.
 
-Downloads the model from HuggingFace on first use, then runs tiled
-inference to upscale images 4x while staying within VRAM limits.
+Uses 4xNomosUni_span_multijpg — a fast SPAN-architecture model optimized
+for realistic photos. ~5-8x faster than RRDB (UltraSharp) with comparable
+quality. Downloads from HuggingFace on first use.
 """
 
 import logging
@@ -14,17 +15,17 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-_HF_REPO = "uwg/upscaler"
-_HF_FILENAME = "ESRGAN/4x-UltraSharp.pth"
+_HF_REPO = "Phips/4xNomosUni_span_multijpg"
+_HF_FILENAME = "4xNomosUni_span_multijpg.pth"
 _MODEL_CACHE: dict = {}
 
 
 def _download_model() -> Path:
-    """Download 4x-UltraSharp weights from HuggingFace (cached after first download)."""
+    """Download SPAN upscaler weights from HuggingFace (cached after first download)."""
     from huggingface_hub import hf_hub_download
 
     path = hf_hub_download(repo_id=_HF_REPO, filename=_HF_FILENAME)
-    logger.info("4x-UltraSharp model at: %s", path)
+    logger.info("4xNomosUni_span_multijpg model at: %s", path)
     return Path(path)
 
 
@@ -47,7 +48,7 @@ def _load_model(device: torch.device, dtype: torch.dtype):
     model.eval()
 
     _MODEL_CACHE[cache_key] = (model, use_half)
-    logger.info("4x-UltraSharp loaded (device=%s, half=%s, scale=%dx)", device, use_half, model.scale)
+    logger.info("SPAN upscaler loaded (device=%s, half=%s, scale=%dx)", device, use_half, model.scale)
     return model, use_half
 
 

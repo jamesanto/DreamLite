@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument(
         "--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)"
     )
-    parser.add_argument("--no_upscale", action="store_true", help="Disable 4x UltraSharp upscaling")
+    parser.add_argument("--no_upscale", action="store_true", help="Disable 4x SPAN upscaling")
     parser.add_argument("--no_face_restore", action="store_true", help="Disable face restoration (swap original face back)")
 
     return parser.parse_args()
@@ -200,7 +200,7 @@ def main():
     if not args.no_upscale:
         from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
 
-        print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x-UltraSharp...")
+        print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x SPAN...")
         image = upscale_tiled(image, device=torch.device(args.device))
         print(f"Upscaled to {image.size[0]}×{image.size[1]}")
 
