@@ -22,10 +22,12 @@ dependencies = [
     "peft>=0.12",
     "tqdm",
     "einops",
-    "triton-windows>=3.2,<3.3; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
+inductor = [
+    "triton-windows>=3.2,<3.3; sys_platform == 'win32'",
+]
 quantize = [
     "bitsandbytes>=0.43",
 ]

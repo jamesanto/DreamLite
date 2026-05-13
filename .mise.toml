@@ -24,7 +24,7 @@ description = "Launch the DreamLite Gradio web app"
 run = "uv run python app.py"
 
 [tasks.app-nocompile]
-description = "Launch the Gradio app without torch.compile (no Triton needed)"
+description = "Launch the Gradio app without acceleration (eager mode)"
 run = "uv run python app.py --no-compile"
 
 [tasks.app-share]

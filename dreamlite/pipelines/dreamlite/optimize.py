@@ -138,6 +138,101 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
         return unet
 
 
+class CUDAGraphRunner:
+    """
+    Wraps a UNet module in a CUDA graph for zero-overhead replay.
+
+    On first call for a given input shape, records the graph. Subsequent calls
+    at the same shape replay the recorded graph without Python dispatch overhead.
+    Different shapes get separate graph captures (e.g., batch=2 for generate,
+    batch=3 for edit).
+    """
+
+    def __init__(self, model: torch.nn.Module):
+        self._model = model
+        self._graphs: dict[tuple, tuple] = {}  # shape_key → (graph, static_inputs, static_output)
+
+    def __call__(self, sample, timestep, encoder_hidden_states, encoder_attention_mask, added_cond_kwargs, **kwargs):
+        shape_key = (sample.shape, encoder_hidden_states.shape)
+
+        if shape_key not in self._graphs:
+            return self._capture_and_run(
+                shape_key, sample, timestep, encoder_hidden_states, encoder_attention_mask, added_cond_kwargs, **kwargs
+            )
+
+        graph, static_sample, static_timestep, static_enc_hidden, static_enc_mask, static_time_ids, static_output = (
+            self._graphs[shape_key]
+        )
+
+        static_sample.copy_(sample)
+        static_timestep.copy_(timestep)
+        static_enc_hidden.copy_(encoder_hidden_states)
+        static_enc_mask.copy_(encoder_attention_mask)
+        static_time_ids.copy_(added_cond_kwargs["time_ids"])
+
+        graph.replay()
+        return (static_output.clone(),)
+
+    @torch.no_grad()
+    def _capture_and_run(
+        self, shape_key, sample, timestep, encoder_hidden_states, encoder_attention_mask, added_cond_kwargs, **kwargs
+    ):
+        logger.info(f"CUDA Graph: capturing for shape {shape_key}")
+
+        # Warmup (required before capture)
+        for _ in range(3):
+            _ = self._model(
+                sample,
+                timestep=timestep,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=encoder_attention_mask,
+                added_cond_kwargs=added_cond_kwargs,
+                return_dict=False,
+            )
+        torch.cuda.synchronize()
+
+        # Allocate static buffers
+        static_sample = sample.clone()
+        static_timestep = timestep.clone()
+        static_enc_hidden = encoder_hidden_states.clone()
+        static_enc_mask = encoder_attention_mask.clone()
+        static_time_ids = added_cond_kwargs["time_ids"].clone()
+
+        # Capture
+        graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(graph):
+            static_output = self._model(
+                static_sample,
+                timestep=static_timestep,
+                encoder_hidden_states=static_enc_hidden,
+                encoder_attention_mask=static_enc_mask,
+                added_cond_kwargs={"time_ids": static_time_ids},
+                return_dict=False,
+            )[0]
+
+        self._graphs[shape_key] = (
+            graph, static_sample, static_timestep, static_enc_hidden, static_enc_mask, static_time_ids, static_output
+        )
+
+        # Return the result from this first capture run
+        return (static_output.clone(),)
+
+
+def wrap_unet_cuda_graph(unet: torch.nn.Module) -> CUDAGraphRunner:
+    """
+    Wrap UNet in a CUDA graph runner for maximum inference speed.
+
+    Eliminates all Python dispatch overhead by recording GPU operations once
+    and replaying them. No Triton or inductor required.
+    Automatically handles different batch sizes (generate=2, edit=3).
+    """
+    if not torch.cuda.is_available():
+        logger.warning("CUDA not available; cannot use CUDA graphs.")
+        return unet
+    logger.info("UNet wrapped with CUDA Graph runner (zero Python overhead on replay).")
+    return CUDAGraphRunner(unet)
+
+
 def enable_fast_attention() -> None:
     """Enable optimal CUDA attention backends for Turing+ GPUs."""
     if not torch.cuda.is_available():

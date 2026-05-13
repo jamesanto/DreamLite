@@ -39,7 +39,8 @@ _parser = argparse.ArgumentParser(description="DreamLite Gradio App")
 _parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
 _parser.add_argument("--port", type=int, default=7863, help="Server port")
 _parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
-_parser.add_argument("--no-compile", action="store_true", help="Disable torch.compile (avoids Triton requirement)")
+_parser.add_argument("--no-compile", action="store_true", help="Disable CUDA graph acceleration (use eager mode)")
+_parser.add_argument("--use-inductor", action="store_true", help="Use torch.compile inductor backend instead of CUDA graphs")
 _parser.add_argument(
     "--vae-tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions, adds latency)"
 )
@@ -187,10 +188,12 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     pipe = pipe.to(DEVICE)
 
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
-        use_compile = not APP_ARGS.no_compile
+        use_cuda_graph = not APP_ARGS.no_compile and not APP_ARGS.use_inductor
+        use_inductor = APP_ARGS.use_inductor and not APP_ARGS.no_compile
         pipe.optimize(
             offload_text_encoder=True,
-            compile_unet_model=use_compile,
+            compile_unet_model=use_inductor,
+            use_cuda_graph=use_cuda_graph,
             fuse_qkv=False,
             enable_vae_tiling=APP_ARGS.vae_tiling,
         )
@@ -505,7 +508,11 @@ def build_app() -> gr.Blocks:
 
 if __name__ == "__main__":
     if APP_ARGS.no_compile:
-        log.info("torch.compile disabled via --no-compile")
+        log.info("Acceleration disabled via --no-compile (eager mode)")
+    elif APP_ARGS.use_inductor:
+        log.info("Using torch.compile inductor backend (via --use-inductor)")
+    else:
+        log.info("Using CUDA graph acceleration (default)")
     log.info("Starting DreamLite app on %s:%d", APP_ARGS.host, APP_ARGS.port)
     app = build_app()
     app.launch(

@@ -55,7 +55,8 @@ def parse_args():
     parser.add_argument(
         "--no_optimize", action="store_true", help="Disable all pipeline optimizations (compile, fuse, offload)"
     )
-    parser.add_argument("--no_compile", action="store_true", help="Disable torch.compile only")
+    parser.add_argument("--no_compile", action="store_true", help="Disable CUDA graph acceleration (eager mode)")
+    parser.add_argument("--use_inductor", action="store_true", help="Use torch.compile inductor backend instead of CUDA graphs")
     parser.add_argument(
         "--vae_tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions)"
     )
@@ -87,15 +88,18 @@ def main():
 
     # Apply speed optimizations
     if not args.no_optimize:
-        use_compile = not args.no_compile
+        use_cuda_graph = not args.no_compile and not args.use_inductor
+        use_inductor = args.use_inductor and not args.no_compile
         pipeline.optimize(
             offload_text_encoder=True,
-            compile_unet_model=use_compile,
+            compile_unet_model=use_inductor,
+            use_cuda_graph=use_cuda_graph,
             fuse_qkv=False,
             enable_vae_tiling=args.vae_tiling,
         )
+        accel = "CUDA graphs" if use_cuda_graph else ("inductor" if use_inductor else "none")
         print(
-            f"Pipeline optimized (SDPA{' + compile' if use_compile else ''}{' + vae_tiling' if args.vae_tiling else ''})."
+            f"Pipeline optimized (SDPA + {accel}{' + vae_tiling' if args.vae_tiling else ''})."
         )
 
     # Setup Data

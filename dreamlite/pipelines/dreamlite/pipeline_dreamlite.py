@@ -31,7 +31,7 @@ from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoTokenizer, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
 
 from ...models.unets.unet_2d_condition_mobile import DreamLiteUNetModel
-from .optimize import compile_unet, enable_fast_attention, move_to_device, offload_to_cpu
+from .optimize import compile_unet, enable_fast_attention, move_to_device, offload_to_cpu, wrap_unet_cuda_graph
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -179,7 +179,8 @@ class DreamLitePipeline(
     def optimize(
         self,
         offload_text_encoder: bool = True,
-        compile_unet_model: bool = True,
+        compile_unet_model: bool = False,
+        use_cuda_graph: bool = True,
         fuse_qkv: bool = True,
         enable_vae_tiling: bool = True,
     ) -> "DreamLitePipeline":
@@ -189,7 +190,9 @@ class DreamLitePipeline(
         Args:
             offload_text_encoder: Move text encoder to CPU after encoding to free VRAM
                 for the UNet denoising loop.
-            compile_unet_model: Apply torch.compile to UNet for kernel fusion.
+            compile_unet_model: Apply torch.compile to UNet (inductor backend, needs Triton).
+            use_cuda_graph: Wrap UNet in CUDA graph runner for zero-overhead replay.
+                Mutually exclusive with compile_unet_model; takes priority.
             fuse_qkv: Fuse Q/K/V attention projections into a single matmul.
             enable_vae_tiling: Enable tiled VAE decoding to prevent OOM during decode.
 
@@ -208,7 +211,10 @@ class DreamLitePipeline(
             except (AttributeError, RuntimeError) as e:
                 logger.warning("QKV fusion not supported for this model: %s", e)
 
-        if compile_unet_model and not self._unet_compiled:
+        if use_cuda_graph and not self._unet_compiled:
+            self.unet = wrap_unet_cuda_graph(self.unet)
+            self._unet_compiled = True
+        elif compile_unet_model and not self._unet_compiled:
             self.unet = compile_unet(self.unet)
             self._unet_compiled = True
 
