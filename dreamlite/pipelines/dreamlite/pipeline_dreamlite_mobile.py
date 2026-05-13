@@ -12,27 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import List, Optional, Union
+
 import numpy as np
 import torch
-from typing import List, Optional, Union
-from PIL import Image
-from torch.nn.utils.rnn import pad_sequence
-
-from transformers import AutoTokenizer, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
-from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img import retrieve_latents
 from diffusers.image_processor import VaeImageProcessor
-from diffusers.loaders import (
-    FluxIPAdapterMixin, 
-    FluxLoraLoaderMixin, 
-    FromSingleFileMixin, 
-    TextualInversionLoaderMixin
-)
+from diffusers.loaders import FluxIPAdapterMixin, FluxLoraLoaderMixin, FromSingleFileMixin, TextualInversionLoaderMixin
 from diffusers.models import AutoencoderTiny
+from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
+from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion_img2img import retrieve_latents
 from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
 from diffusers.utils import is_torch_xla_available, logging
 from diffusers.utils.torch_utils import randn_tensor
-from diffusers.pipelines.pipeline_utils import DiffusionPipeline
-from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
+from PIL import Image
+from torch.nn.utils.rnn import pad_sequence
+from transformers import AutoTokenizer, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
 
 from dreamlite.models import DreamLiteUNetModel
 
@@ -111,13 +106,13 @@ class DreamLiteMobilePipeline(
             unet=unet,
             scheduler=scheduler,
         )
-        
+
         # 安全计算 VAE scale factor，避免非标准 config 导致报错，默认回落到 8
         if hasattr(self.vae.config, "encoder_block_out_channels"):
             self.vae_scale_factor = 2 ** (len(self.vae.config.encoder_block_out_channels) - 1)
         else:
             self.vae_scale_factor = 8
-            
+
         self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor * 2)
         self.default_sample_size = 128
 
@@ -141,7 +136,7 @@ class DreamLiteMobilePipeline(
         text_pad_embedding: Optional[torch.Tensor] = None,
     ):
         if mode == "edit":
-            drop_idx = 64 
+            drop_idx = 64
             template = (
                 "<|im_start|>system\nDescribe the key features of the input image (color, shape, size, "
                 "texture, objects, background), then explain how the user's text instruction should alter "
@@ -149,11 +144,11 @@ class DreamLiteMobilePipeline(
                 "consistency with the original input where appropriate.<|im_end|>\n<|im_start|>user\n"
                 "<|vision_start|><|image_pad|><|vision_end|>{}<|im_end|>\n<|im_start|>assistant\n"
             )
-            
+
             txts = [template.format(p) for p in prompts]
             # 注意：移动端此处的 resize 使用了 (224, 224) 提升速度
             images = [image.resize((256, 256), Image.Resampling.LANCZOS)] * len(prompts)
-            
+
             tk_out = self.processor(
                 text=txts, images=images, padding=True, return_tensors="pt",
             ).to(device)
@@ -166,7 +161,7 @@ class DreamLiteMobilePipeline(
                 # mm_token_type_ids=tk_out.mm_token_type_ids,
                 output_hidden_states=True
             )
-            
+
         elif mode == 'generate':
             drop_idx = 34
             template = (
@@ -174,7 +169,7 @@ class DreamLiteMobilePipeline(
                 "quantity, text, spatial relationships of the objects and background:<|im_end|>\n"
                 "<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n"
             )
-            
+
             txts = [template.format(p) for p in prompts]
             tk_out = self.tokenizer(
                 text=txts, padding=True, return_tensors="pt",
@@ -191,21 +186,21 @@ class DreamLiteMobilePipeline(
         hidden_states = outputs.hidden_states[-1]
         split_hidden_states = self._extract_masked_hidden(hidden_states, tk_out.attention_mask)
         split_hidden_states = [e[drop_idx:] for e in split_hidden_states]
-        
+
         prompt_embeds = pad_sequence(split_hidden_states, batch_first=True, padding_value=0).to(dtype=dtype, device=device)
 
         B, L, _ = prompt_embeds.shape
         prompt_embeds_mask = torch.zeros((B, L), dtype=torch.long, device=device)
         for i, seq in enumerate(split_hidden_states):
             prompt_embeds_mask[i, :seq.shape[0]] = 1
-        
+
         if text_pad_embedding is not None:
             pad_emb = text_pad_embedding.to(dtype=dtype, device=device)
             if pad_emb.ndim == 1:
                 pad_emb = pad_emb.unsqueeze(0).unsqueeze(0)
             elif pad_emb.ndim == 2:
                 pad_emb = pad_emb.unsqueeze(0)
-            
+
             mask_expanded = prompt_embeds_mask.unsqueeze(-1).to(dtype=dtype)
             prompt_embeds = prompt_embeds * mask_expanded + pad_emb * (1 - mask_expanded)
 
@@ -236,10 +231,10 @@ class DreamLiteMobilePipeline(
         return latents
 
     def prepare_image_latents(
-        self, 
-        image: Union[torch.Tensor, Image.Image, List[Image.Image]], 
-        dtype: torch.dtype, 
-        device: torch.device, 
+        self,
+        image: Union[torch.Tensor, Image.Image, List[Image.Image]],
+        dtype: torch.dtype,
+        device: torch.device,
         generator: Optional[torch.Generator] = None
     ) -> torch.Tensor:
         if not isinstance(image, (torch.Tensor, Image.Image, list)):
@@ -251,7 +246,7 @@ class DreamLiteMobilePipeline(
             image_latents = image
         else:
             image_latents = retrieve_latents(self.vae.encode(image), sample_mode="argmax")
-        
+
         return image_latents
 
     @torch.no_grad()
@@ -271,6 +266,9 @@ class DreamLiteMobilePipeline(
         return_dict: bool = True,
         max_sequence_length: int = 200,
         text_pad_embedding: Optional[torch.Tensor] = None,
+        bucket: int = 0,
+        callback_on_step_end: Optional[callable] = None,
+        interrupt_flag: Optional[callable] = None,
     ):
         # 1. Init Locals
         height = height or self.default_sample_size * self.vae_scale_factor
@@ -280,8 +278,9 @@ class DreamLiteMobilePipeline(
         dtype = self.text_encoder.dtype
         batch_size = 1  # Note: Currently forced to batch_size 1
 
-        if image is not None: width = height = 1024
-        
+        if image is not None and bucket == 0:
+            width = height = 1024
+
         if sigmas is None:
             sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps)
 
@@ -300,9 +299,9 @@ class DreamLiteMobilePipeline(
             device,
             generator,
         )
-        
+
         # 5. Prepare Timesteps
-        image_seq_len = latents.shape[2] * latents.shape[3] // 4 
+        image_seq_len = latents.shape[2] * latents.shape[3] // 4
         mu = calculate_shift(
             image_seq_len,
             self.scheduler.config.get("base_image_seq_len", 256),
@@ -323,15 +322,15 @@ class DreamLiteMobilePipeline(
         if task == 'generate':
             prompt_str = f"[Generate]: {prompt}"
             prompt_embeds, text_attention_mask = self.encode_prompt(
-                mode="generate", 
-                prompts=[prompt_str], 
+                mode="generate",
+                prompts=[prompt_str],
                 device=device,
                 dtype=dtype,
                 text_pad_embedding=text_pad_embedding,
             )
             image_latents = torch.zeros_like(latents)
-            
-        else: 
+
+        else:
             prompt_str = f"[Edit]: A diptych with two side-by-side images of the same scene. Compared to the right side, the left one has {prompt}"
             prompt_embeds, text_attention_mask = self.encode_prompt(
                 mode="edit",
@@ -348,9 +347,11 @@ class DreamLiteMobilePipeline(
             )
 
         # 7. Denoising Loop
+        import time as _time
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                
+                _t_step = _time.perf_counter()
+
                 # Construct Batch Input
                 if task == "generate":
                     latents_in = latents
@@ -360,8 +361,8 @@ class DreamLiteMobilePipeline(
 
                 elif task == "edit":
                     latents_in = latents
-                    cond_img_in = image_latents 
-                    model_input = torch.cat([latents_in, cond_img_in], dim=3) 
+                    cond_img_in = image_latents
+                    model_input = torch.cat([latents_in, cond_img_in], dim=3)
                     time_ids_in = add_time_ids
 
                 # UNet Forward
@@ -371,7 +372,7 @@ class DreamLiteMobilePipeline(
                     encoder_hidden_states=prompt_embeds,
                     encoder_attention_mask=text_attention_mask,
                     added_cond_kwargs={"time_ids": time_ids_in},
-                    return_dict=False, 
+                    return_dict=False,
                 )[0]
 
                 # Drop extra channels
@@ -387,6 +388,14 @@ class DreamLiteMobilePipeline(
 
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
+
+                if callback_on_step_end is not None:
+                    step_time = _time.perf_counter() - _t_step
+                    callback_on_step_end(i + 1, num_inference_steps, step_time)
+
+                if interrupt_flag is not None and interrupt_flag():
+                    logger.info("Generation interrupted at step %d/%d", i + 1, num_inference_steps)
+                    break
 
                 if XLA_AVAILABLE:
                     xm.mark_step()
