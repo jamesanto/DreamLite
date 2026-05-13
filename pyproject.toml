@@ -23,6 +23,7 @@ dependencies = [
     "tqdm",
     "einops",
     "bitsandbytes>=0.43",
+    "triton-windows>=3.2,<3.3; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

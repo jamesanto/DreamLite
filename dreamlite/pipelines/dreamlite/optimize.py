@@ -14,7 +14,6 @@ import sys
 from typing import Optional
 
 import torch
-
 from diffusers.utils import logging
 
 logger = logging.get_logger(__name__)
@@ -81,12 +80,23 @@ def get_4bit_quantization_config(compute_dtype: Optional[torch.dtype] = None) ->
     )
 
 
+def _triton_available() -> bool:
+    """Check if a working Triton installation is present (required for inductor backend)."""
+    try:
+        import triton  # noqa: F401
+        import triton.language  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
     """
     Apply torch.compile to the UNet for kernel fusion and CUDA graph capture.
 
-    Uses 'reduce-overhead' mode for static-shape denoising loops.
-    Falls back gracefully on Windows where Triton may be unavailable.
+    Uses 'reduce-overhead' mode on Linux, 'default' mode on Windows.
+    Requires Triton (triton-windows on Windows) for the inductor backend.
+    Falls back to eager mode if Triton is missing or compilation fails.
     """
     if sys.version_info < (3, 10):
         logger.warning("torch.compile requires Python 3.10+; skipping compilation.")
@@ -94,6 +104,14 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
 
     if not hasattr(torch, "compile"):
         logger.warning("torch.compile not available in this PyTorch version; skipping.")
+        return unet
+
+    if not _triton_available():
+        logger.warning(
+            "Triton not found — torch.compile requires it for the inductor backend. "
+            "On Windows, install with: uv add 'triton-windows>=3.2,<3.3' "
+            "(must match your PyTorch version). Skipping compilation."
+        )
         return unet
 
     try:

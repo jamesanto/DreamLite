@@ -16,7 +16,6 @@ from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
     _BNB_AVAILABLE,
     get_8bit_quantization_config,
-    get_4bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
 )
@@ -124,7 +123,7 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
         pipe.optimize(
             offload_text_encoder=True,
-            compile_unet_model=False,
+            compile_unet_model=True,
             fuse_qkv=False,
             enable_vae_tiling=True,
         )
