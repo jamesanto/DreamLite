@@ -31,7 +31,7 @@ from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoTokenizer, Qwen3VLForConditionalGeneration, Qwen3VLProcessor
 
 from ...models.unets.unet_2d_condition_mobile import DreamLiteUNetModel
-from .optimize import compile_unet, move_to_device, offload_to_cpu
+from .optimize import compile_unet, enable_fast_attention, move_to_device, offload_to_cpu
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -200,6 +200,15 @@ class DreamLitePipeline(
             self (for method chaining)
         """
         self._offload_text_encoder = offload_text_encoder
+
+        # Enable optimal CUDA attention backends
+        enable_fast_attention()
+
+        # Enable SDPA (scaled dot-product attention) for fastest attention kernels
+        if hasattr(self.unet, "set_attn_processor"):
+            from diffusers.models.attention_processor import AttnProcessor2_0
+            self.unet.set_attn_processor(AttnProcessor2_0())
+            logger.info("Set AttnProcessor2_0 (SDPA) on UNet.")
 
         if fuse_qkv:
             try:

@@ -97,6 +97,17 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
         return unet
 
 
+def enable_fast_attention() -> None:
+    """Enable optimal CUDA attention backends for Turing+ GPUs."""
+    if not torch.cuda.is_available():
+        return
+    torch.backends.cuda.enable_math_sdp(True)
+    torch.backends.cuda.enable_flash_sdp(True)
+    torch.backends.cuda.enable_mem_efficient_sdp(True)
+    torch.backends.cudnn.benchmark = True
+    logger.info("Enabled flash/mem-efficient SDPA and cudnn benchmark.")
+
+
 def offload_to_cpu(module: torch.nn.Module) -> None:
     """Move a module to CPU and release GPU memory."""
     module.to("cpu")
