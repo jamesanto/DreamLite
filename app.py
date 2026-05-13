@@ -124,7 +124,7 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
         pipe.optimize(
             offload_text_encoder=True,
-            compile_unet_model=True,
+            compile_unet_model=False,
             fuse_qkv=False,
             enable_vae_tiling=True,
         )

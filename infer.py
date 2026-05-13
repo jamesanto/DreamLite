@@ -112,11 +112,11 @@ def main():
     if not args.no_optimize:
         pipeline.optimize(
             offload_text_encoder=True,
-            compile_unet_model=True,
+            compile_unet_model=False,
             fuse_qkv=False,
             enable_vae_tiling=True,
         )
-        print("Pipeline optimized (offload + compile + vae_tiling).")
+        print("Pipeline optimized (SDPA + vae_tiling).")
 
     # Setup Data
     prompt = args.prompt

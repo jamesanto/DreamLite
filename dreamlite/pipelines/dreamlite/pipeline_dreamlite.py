@@ -204,12 +204,6 @@ class DreamLitePipeline(
         # Enable optimal CUDA attention backends
         enable_fast_attention()
 
-        # Enable SDPA (scaled dot-product attention) for fastest attention kernels
-        if hasattr(self.unet, "set_attn_processor"):
-            from diffusers.models.attention_processor import AttnProcessor2_0
-            self.unet.set_attn_processor(AttnProcessor2_0())
-            logger.info("Set AttnProcessor2_0 (SDPA) on UNet.")
-
         if fuse_qkv:
             try:
                 self.unet.fuse_qkv_projections()
