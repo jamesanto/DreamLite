@@ -11,6 +11,8 @@ import logging
 import os
 import time
 
+print("Starting DreamLite... (loading libraries)")
+
 import diffusers.utils.logging as diffusers_logging
 import gradio as gr
 import torch
