@@ -175,9 +175,6 @@ class DreamLitePipeline(
         self.default_sample_size = 128
         self._offload_text_encoder = False
         self._unet_compiled = False
-        self._text_encoder_quantized = (
-            getattr(getattr(self.text_encoder, "config", None), "quantization_config", None) is not None
-        )
 
     def optimize(
         self,
@@ -481,7 +478,7 @@ class DreamLitePipeline(
         _profile["text_encode"] = _time.perf_counter() - _t0
 
         # 6b. Offload text encoder to CPU to free VRAM for the UNet loop
-        if self._offload_text_encoder and not self._text_encoder_quantized:
+        if self._offload_text_encoder:
             _t0 = _time.perf_counter()
             offload_to_cpu(self.text_encoder)
             _profile["text_offload"] = _time.perf_counter() - _t0
@@ -585,7 +582,7 @@ class DreamLitePipeline(
         _profile["vae_decode"] = _time.perf_counter() - _t0
 
         # 8b. Restore text encoder to GPU for next call if it was offloaded
-        if self._offload_text_encoder and not self._text_encoder_quantized:
+        if self._offload_text_encoder:
             _t0 = _time.perf_counter()
             move_to_device(self.text_encoder, device, dtype)
             _profile["text_reload"] = _time.perf_counter() - _t0
@@ -644,11 +641,7 @@ class DreamLitePipeline(
             _vram_current,
         )
 
-        # Skip maybe_free_model_hooks() — it can crash when text encoder uses
-        # device_map="auto" with bitsandbytes quantization (accelerate hook cleanup
-        # on quantized layers triggers segfault on Windows).
-        if not self._text_encoder_quantized:
-            self.maybe_free_model_hooks()
+        self.maybe_free_model_hooks()
 
         if not return_dict:
             return (image_out,)

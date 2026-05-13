@@ -21,8 +21,6 @@ from PIL import Image
 
 from dreamlite import DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
-    _BNB_AVAILABLE,
-    get_8bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
 )
@@ -55,10 +53,6 @@ def parse_args():
 
     # Optimization flags
     parser.add_argument(
-        "--quantize_4bit", action="store_true", default=True, help="Load text encoder in 4-bit (requires bitsandbytes)"
-    )
-    parser.add_argument("--no_quantize", action="store_true", help="Disable 4-bit quantization")
-    parser.add_argument(
         "--no_optimize", action="store_true", help="Disable all pipeline optimizations (compile, fuse, offload)"
     )
     parser.add_argument("--no_compile", action="store_true", help="Disable torch.compile only")
@@ -87,31 +81,9 @@ def main():
     # Build loading kwargs
     load_kwargs = {"torch_dtype": weight_dtype}
 
-    use_4bit = args.quantize_4bit and not args.no_quantize
-    if use_4bit and _BNB_AVAILABLE:
-        from transformers import Qwen3VLForConditionalGeneration
-
-        print("Loading text encoder with 8-bit quantization...")
-        text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
-            args.model_id,
-            subfolder="text_encoder",
-            quantization_config=get_8bit_quantization_config(),
-            device_map="auto",
-            max_memory={0: int(torch.cuda.get_device_properties(0).total_memory * 0.95), "cpu": "16GiB"},
-        )
-        load_kwargs["text_encoder"] = text_encoder
-    elif use_4bit and not _BNB_AVAILABLE:
-        print("Warning: bitsandbytes not installed; loading without quantization.")
-
-    print(f"Loading diffusers pipeline from: {args.model_id}")
+    print(f"Loading diffusers pipeline from: {args.model_id} (fp16 text encoder, CPU offload)")
     pipeline = DreamLitePipeline.from_pretrained(args.model_id, **load_kwargs)
-
-    # Move components to device: quantized text encoder already on CUDA via device_map
-    if use_4bit and _BNB_AVAILABLE:
-        pipeline.unet.to(args.device, dtype=weight_dtype)
-        pipeline.vae.to(args.device, dtype=weight_dtype)
-    else:
-        pipeline = pipeline.to(args.device)
+    pipeline = pipeline.to(args.device)
 
     # Apply speed optimizations
     if not args.no_optimize:

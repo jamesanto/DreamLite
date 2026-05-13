@@ -19,8 +19,6 @@ from PIL import Image
 
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
 from dreamlite.pipelines.dreamlite.optimize import (
-    _BNB_AVAILABLE,
-    get_8bit_quantization_config,
     get_optimal_dtype,
     is_turing_gpu,
 )
@@ -73,7 +71,6 @@ if torch.cuda.is_available():
     gpu_name = torch.cuda.get_device_name(0)
     vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
     log.info("GPU: %s (%.1f GB VRAM) | Turing: %s", gpu_name, vram_gb, is_turing_gpu())
-    log.info("bitsandbytes available: %s", _BNB_AVAILABLE)
 
 MODEL_REGISTRY = {
     "DreamLite-base (20 steps, high quality)": {
@@ -131,31 +128,11 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     config = MODEL_REGISTRY[model_name]
     load_kwargs: dict = {"torch_dtype": DTYPE}
 
-    quantized = use_4bit and _BNB_AVAILABLE and DEVICE == "cuda"
-    if quantized:
-        from transformers import Qwen3VLForConditionalGeneration
-
-        log.info("Loading %s with 8-bit text encoder...", model_name)
-        vram_bytes = torch.cuda.get_device_properties(0).total_memory
-        text_encoder = Qwen3VLForConditionalGeneration.from_pretrained(
-            config["path"],
-            subfolder="text_encoder",
-            quantization_config=get_8bit_quantization_config(),
-            device_map="auto",
-            max_memory={0: int(vram_bytes * 0.95), "cpu": "16GiB"},
-        )
-        load_kwargs["text_encoder"] = text_encoder
-    else:
-        log.info("Loading %s (full precision)...", model_name)
+    log.info("Loading %s (fp16 text encoder, CPU offload after encode)...", model_name)
 
     t0 = time.perf_counter()
     pipe = config["cls"].from_pretrained(config["path"], **load_kwargs)
-
-    if quantized:
-        pipe.unet.to(DEVICE, dtype=DTYPE)
-        pipe.vae.to(DEVICE, dtype=DTYPE)
-    else:
-        pipe = pipe.to(DEVICE)
+    pipe = pipe.to(DEVICE)
 
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
         use_compile = not APP_ARGS.no_compile

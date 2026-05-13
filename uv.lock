@@ -434,7 +434,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
-    { name = "bitsandbytes" },
     { name = "datasets" },
     { name = "diffusers" },
     { name = "einops" },
@@ -457,11 +456,14 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+quantize = [
+    { name = "bitsandbytes" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "accelerate", specifier = ">=1.0" },
-    { name = "bitsandbytes", specifier = ">=0.43" },
+    { name = "bitsandbytes", marker = "extra == 'quantize'", specifier = ">=0.43" },
     { name = "datasets" },
     { name = "diffusers", specifier = ">=0.30" },
     { name = "einops" },
@@ -479,7 +481,7 @@ requires-dist = [
     { name = "transformers", specifier = "==4.57.3" },
     { name = "triton-windows", marker = "sys_platform == 'win32'", specifier = ">=3.2,<3.3" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["quantize", "dev"]
 
 [[package]]
 name = "einops"
