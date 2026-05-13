@@ -5,6 +5,9 @@ Supports both DreamLite-base (28-step, high fidelity) and DreamLite-mobile (4-st
 Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPUs.
 """
 
+import logging
+import time
+
 import gradio as gr
 import torch
 from PIL import Image
@@ -14,15 +17,32 @@ from dreamlite.pipelines.dreamlite.optimize import (
     _BNB_AVAILABLE,
     get_4bit_quantization_config,
     get_optimal_dtype,
+    is_turing_gpu,
 )
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="\033[90m%(asctime)s\033[0m %(levelname)s %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("dreamlite.app")
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DTYPE = get_optimal_dtype() if torch.cuda.is_available() else torch.float32
 
+log.info("Device: %s | Dtype: %s", DEVICE, DTYPE)
+if torch.cuda.is_available():
+    gpu_name = torch.cuda.get_device_name(0)
+    vram_gb = torch.cuda.get_device_properties(0).total_mem / (1024**3)
+    log.info("GPU: %s (%.1f GB VRAM) | Turing: %s", gpu_name, vram_gb, is_turing_gpu())
+    log.info("bitsandbytes available: %s", _BNB_AVAILABLE)
+
 MODEL_REGISTRY = {
-    "DreamLite-base (28 steps, high quality)": {
+    "DreamLite-base (20 steps, high quality)": {
         "path": "models/DreamLite-base",
         "cls": DreamLitePipeline,
         "default_steps": 20,
@@ -64,9 +84,11 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
 
     if model_name in _pipeline_cache:
         _active_model = model_name
+        log.info("Using cached pipeline: %s", model_name)
         return _pipeline_cache[model_name]
 
     if _active_model and _active_model != model_name and _active_model in _pipeline_cache:
+        log.info("Unloading %s to free memory...", _active_model)
         del _pipeline_cache[_active_model]
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -74,12 +96,17 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
     config = MODEL_REGISTRY[model_name]
     load_kwargs: dict = {"torch_dtype": DTYPE}
 
-    if use_4bit and _BNB_AVAILABLE and DEVICE == "cuda":
+    quantized = use_4bit and _BNB_AVAILABLE and DEVICE == "cuda"
+    if quantized:
         load_kwargs["quantization_config"] = get_4bit_quantization_config(compute_dtype=DTYPE)
+        log.info("Loading %s with 4-bit quantization...", model_name)
+    else:
+        log.info("Loading %s (full precision)...", model_name)
 
+    t0 = time.perf_counter()
     pipe = config["cls"].from_pretrained(config["path"], **load_kwargs)
 
-    if not (use_4bit and _BNB_AVAILABLE and DEVICE == "cuda"):
+    if not quantized:
         pipe = pipe.to(DEVICE)
 
     if hasattr(pipe, "optimize") and DEVICE == "cuda":
@@ -89,6 +116,14 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
             fuse_qkv=True,
             enable_vae_tiling=True,
         )
+
+    elapsed = time.perf_counter() - t0
+    log.info("Pipeline ready in %.1fs", elapsed)
+
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated() / (1024**3)
+        reserved = torch.cuda.memory_reserved() / (1024**3)
+        log.info("VRAM: %.2f GB allocated, %.2f GB reserved", allocated, reserved)
 
     _pipeline_cache[model_name] = pipe
     _active_model = model_name
@@ -113,12 +148,19 @@ def generate(
     if not prompt.strip():
         raise gr.Error("Please enter a prompt.")
 
+    task = "edit" if input_image is not None else "generate"
+    log.info("─" * 60)
+    log.info("Task: %s | Model: %s", task, model_name)
+    log.info("Prompt: %s", prompt[:80] + ("..." if len(prompt) > 80 else ""))
+    log.info("Steps: %d | Guidance: %.1f | Seed: %d", steps, guidance_scale, seed)
+
     pipe = _load_pipeline(model_name, use_4bit=use_4bit)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
     width, height = _parse_resolution(resolution)
     if input_image is not None:
         width, height = input_image.size
+    log.info("Resolution: %d × %d", width, height)
 
     kwargs = {
         "prompt": prompt,
@@ -134,7 +176,16 @@ def generate(
         kwargs["guidance_scale"] = guidance_scale
         kwargs["image_guidance_scale"] = image_guidance_scale
 
+    t0 = time.perf_counter()
     result = pipe(**kwargs).images[0]
+    elapsed = time.perf_counter() - t0
+
+    log.info("Generated in %.2fs (%.2f steps/s)", elapsed, steps / elapsed)
+
+    if torch.cuda.is_available():
+        peak = torch.cuda.max_memory_allocated() / (1024**3)
+        log.info("Peak VRAM: %.2f GB", peak)
+        torch.cuda.reset_peak_memory_stats()
 
     if result.size != (width, height):
         result = result.resize((width, height), resample=Image.LANCZOS)
@@ -163,7 +214,8 @@ def build_app() -> gr.Blocks:
         gr.Markdown(
             "# DreamLite\n"
             "**Lightweight on-device unified model for image generation and editing.**\n\n"
-            "Select a model variant, enter a prompt, and optionally upload an image to edit."
+            "Select a model, enter a prompt, and press **Ctrl+Enter** or click Generate.\n"
+            "Upload an image to switch to editing mode."
         )
 
         with gr.Row(equal_height=True):
@@ -174,9 +226,10 @@ def build_app() -> gr.Blocks:
                     label="Model",
                 )
                 prompt_input = gr.Textbox(
-                    label="Prompt",
+                    label="Prompt (Ctrl+Enter to generate)",
                     placeholder="Describe the image to generate, or the edit to apply...",
                     lines=3,
+                    submit_btn=True,
                 )
                 image_input = gr.Image(
                     type="pil",
@@ -225,25 +278,37 @@ def build_app() -> gr.Blocks:
             with gr.Column(scale=1):
                 output_image = gr.Image(type="pil", label="Result")
 
+        # ─── Event bindings ──────────────────────────────────────────────
+
+        all_inputs = [
+            model_dropdown,
+            prompt_input,
+            image_input,
+            resolution_dropdown,
+            steps_slider,
+            guidance_slider,
+            img_guidance_slider,
+            seed_input,
+            use_4bit_checkbox,
+        ]
+
         model_dropdown.change(
             fn=on_model_change,
             inputs=[model_dropdown],
             outputs=[steps_slider, guidance_slider, guidance_slider, img_guidance_slider],
         )
 
+        # Button click
         generate_btn.click(
             fn=generate,
-            inputs=[
-                model_dropdown,
-                prompt_input,
-                image_input,
-                resolution_dropdown,
-                steps_slider,
-                guidance_slider,
-                img_guidance_slider,
-                seed_input,
-                use_4bit_checkbox,
-            ],
+            inputs=all_inputs,
+            outputs=[output_image],
+        )
+
+        # Ctrl+Enter / submit from the prompt textbox
+        prompt_input.submit(
+            fn=generate,
+            inputs=all_inputs,
             outputs=[output_image],
         )
 
@@ -272,17 +337,7 @@ def build_app() -> gr.Blocks:
                     True,
                 ],
             ],
-            inputs=[
-                model_dropdown,
-                prompt_input,
-                image_input,
-                resolution_dropdown,
-                steps_slider,
-                guidance_slider,
-                img_guidance_slider,
-                seed_input,
-                use_4bit_checkbox,
-            ],
+            inputs=all_inputs,
         )
 
     return app
@@ -297,5 +352,6 @@ if __name__ == "__main__":
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
     args = parser.parse_args()
 
+    log.info("Starting DreamLite app on %s:%d", args.host, args.port)
     app = build_app()
     app.launch(server_name=args.host, server_port=args.port, share=args.share)
