@@ -97,7 +97,6 @@ def compile_unet(unet: torch.nn.Module) -> torch.nn.Module:
         return unet
 
     try:
-        import torch._dynamo
         torch._dynamo.config.suppress_errors = True
 
         backend = "inductor"
