@@ -81,19 +81,19 @@ if torch.cuda.is_available():
     log.info("GPU: %s (%.1f GB VRAM) | Turing: %s", gpu_name, vram_gb, is_turing_gpu())
 
 MODEL_REGISTRY = {
-    "DreamLite-base (28 steps, high quality)": {
-        "path": "models/DreamLite-base",
-        "cls": DreamLitePipeline,
-        "default_steps": 28,
-        "default_guidance": 3.5,
-        "supports_cfg": True,
-    },
     "DreamLite-mobile (4 steps, fast)": {
         "path": "models/DreamLite-mobile",
         "cls": DreamLiteMobilePipeline,
         "default_steps": 4,
         "default_guidance": 1.0,
         "supports_cfg": False,
+    },
+    "DreamLite-base (28 steps, high quality)": {
+        "path": "models/DreamLite-base",
+        "cls": DreamLitePipeline,
+        "default_steps": 28,
+        "default_guidance": 3.5,
+        "supports_cfg": True,
     },
 }
 
@@ -516,25 +516,25 @@ def build_app() -> gr.Blocks:
             examples=[
                 [
                     list(MODEL_REGISTRY.keys())[0],
-                    "A close-up of a fire-breathing dragon, cinematic shot",
-                    None,
-                    "832 × 1216 (2:3)",
-                    28,
-                    3.5,
-                    1.0,
-                    123,
-                    True,
-                    True,
-                ],
-                [
-                    list(MODEL_REGISTRY.keys())[1],
                     "A portrait of a young woman with flowers",
                     None,
                     "1024 × 1024 (1:1)",
                     4,
                     1.0,
                     1.0,
-                    42,
+                    -1,
+                    True,
+                    True,
+                ],
+                [
+                    list(MODEL_REGISTRY.keys())[1],
+                    "A close-up of a fire-breathing dragon, cinematic shot",
+                    None,
+                    "832 × 1216 (2:3)",
+                    28,
+                    3.5,
+                    1.0,
+                    -1,
                     True,
                     True,
                 ],
