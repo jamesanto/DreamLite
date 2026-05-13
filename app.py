@@ -6,6 +6,7 @@ Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPU
 """
 
 import argparse
+import faulthandler
 import logging
 import time
 
@@ -22,6 +23,9 @@ from dreamlite.pipelines.dreamlite.optimize import (
     get_optimal_dtype,
     is_turing_gpu,
 )
+
+# Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
+faulthandler.enable()
 
 # ─── CLI Args (parsed early so they're available to configuration) ────────────
 
