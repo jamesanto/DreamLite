@@ -67,46 +67,17 @@ def _tensor_to_img(tensor: torch.Tensor) -> Image.Image:
     return Image.fromarray((arr * 255).astype(np.uint8))
 
 
-@torch.inference_mode()
-def upscale_tiled(
-    img: Image.Image,
-    device: torch.device = None,
-    dtype: torch.dtype = torch.float16,
-    tile_size: int = 512,
-    tile_pad: int = 16,
-) -> Image.Image:
-    """
-    Upscale an image 4x using tiled inference.
-
-    Args:
-        img: Input PIL Image (RGB).
-        device: CUDA device (defaults to cuda:0 if available).
-        dtype: Inference dtype (fp16 recommended for speed/VRAM).
-        tile_size: Size of each processing tile (default 512).
-        tile_pad: Overlap padding between tiles to avoid seam artifacts.
-
-    Returns:
-        Upscaled PIL Image (4x resolution).
-    """
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    model, use_half = _load_model(device, dtype)
-    scale = model.scale
-
-    img = img.convert("RGB")
-    w, h = img.size
-    out_h, out_w = h * scale, w * scale
-
-    input_tensor = _img_to_tensor(img, device, use_half)
+def _upscale_tiled(model, input_tensor, scale, device):
+    """Tiled fallback when single-pass OOMs."""
     _, _, img_h, img_w = input_tensor.shape
+    out_h, out_w = img_h * scale, img_w * scale
+    tile_size, tile_pad = 512, 16
 
     output = torch.zeros((1, 3, out_h, out_w), dtype=input_tensor.dtype, device=device)
-
     tiles_x = max(1, (img_w + tile_size - 1) // tile_size)
     tiles_y = max(1, (img_h + tile_size - 1) // tile_size)
 
-    logger.info("Upscaling %dx%d → %dx%d (%dx%d tiles)", w, h, out_w, out_h, tiles_x, tiles_y)
+    logger.info("Tiled upscale: %dx%d tiles", tiles_x, tiles_y)
 
     for y_idx in range(tiles_y):
         for x_idx in range(tiles_x):
@@ -135,9 +106,57 @@ def upscale_tiled(
             ] = tile_output[:, :, out_y_start:out_y_end, out_x_start:out_x_end]
 
     result = _tensor_to_img(output)
+    del output
+    return result
 
-    del input_tensor, output
+
+@torch.inference_mode()
+def upscale(
+    img: Image.Image,
+    device: torch.device = None,
+    dtype: torch.dtype = torch.float16,
+) -> Image.Image:
+    """
+    Upscale an image 4x in a single forward pass using SPAN.
+
+    Falls back to tiled inference if the whole image doesn't fit in VRAM.
+
+    Args:
+        img: Input PIL Image (RGB).
+        device: CUDA device (defaults to cuda:0 if available).
+        dtype: Inference dtype (fp16 recommended for speed/VRAM).
+
+    Returns:
+        Upscaled PIL Image (4x resolution).
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model, use_half = _load_model(device, dtype)
+    scale = model.scale
+
+    img = img.convert("RGB")
+    w, h = img.size
+
+    input_tensor = _img_to_tensor(img, device, use_half)
+
+    logger.info("Upscaling %dx%d → %dx%d (single pass)", w, h, w * scale, h * scale)
+
+    use_tiled = False
+    try:
+        output = model(input_tensor)
+        result = _tensor_to_img(output)
+        del output
+    except torch.cuda.OutOfMemoryError:
+        logger.info("OOM on single pass — falling back to 512px tiles")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        use_tiled = True
+
+    if use_tiled:
+        result = _upscale_tiled(model, input_tensor, scale, device)
+
+    del input_tensor
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-
     return result

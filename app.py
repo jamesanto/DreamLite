@@ -26,7 +26,7 @@ from dreamlite.pipelines.dreamlite.optimize import (
     get_optimal_dtype,
     is_turing_gpu,
 )
-from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
+from dreamlite.pipelines.dreamlite.upscale import upscale
 
 # Print Python traceback on segfault/fatal signal (no-op if signal unavailable)
 faulthandler.enable()
@@ -388,7 +388,7 @@ def generate(
         yield "Upscaling 4x...", result
         log.info("Upscaling %s with 4x SPAN...", result.size)
         t_up = time.perf_counter()
-        result = upscale_tiled(result, device=torch.device(DEVICE), dtype=DTYPE)
+        result = upscale(result, device=torch.device(DEVICE), dtype=DTYPE)
         log.info("Upscaled to %s in %.1fs", result.size, time.perf_counter() - t_up)
         yield f"Done — {result.size[0]}×{result.size[1]}", result
 

@@ -198,10 +198,10 @@ def main():
             print("No face detected — skipping face restore.")
 
     if not args.no_upscale:
-        from dreamlite.pipelines.dreamlite.upscale import upscale_tiled
+        from dreamlite.pipelines.dreamlite.upscale import upscale
 
         print(f"Upscaling {image.size[0]}×{image.size[1]} with 4x SPAN...")
-        image = upscale_tiled(image, device=torch.device(args.device))
+        image = upscale(image, device=torch.device(args.device))
         print(f"Upscaled to {image.size[0]}×{image.size[1]}")
 
     out_path = f"{prompt.replace(' ', '_')}.png"
