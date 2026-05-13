@@ -8,8 +8,10 @@ Includes optional 4-bit quantization and pipeline optimizations for low-VRAM GPU
 import logging
 import time
 
+import diffusers.utils.logging as diffusers_logging
 import gradio as gr
 import torch
+import transformers.utils.logging as transformers_logging
 from PIL import Image
 
 from dreamlite import DreamLiteMobilePipeline, DreamLitePipeline
@@ -28,6 +30,9 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger("dreamlite.app")
+
+diffusers_logging.set_verbosity_warning()
+transformers_logging.set_verbosity_warning()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -128,6 +133,8 @@ def _load_pipeline(model_name: str, use_4bit: bool = True):
             enable_vae_tiling=True,
         )
 
+    pipe.set_progress_bar_config(disable=True)
+
     elapsed = time.perf_counter() - t0
     log.info("Pipeline ready in %.1fs", elapsed)
 
@@ -154,7 +161,6 @@ def generate(
     image_guidance_scale: float,
     seed: int,
     use_4bit: bool,
-    progress=gr.Progress(track_tqdm=True),
 ):
     if not prompt.strip():
         raise gr.Error("Please enter a prompt.")
