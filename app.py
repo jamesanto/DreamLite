@@ -38,7 +38,9 @@ _parser.add_argument("--share", action="store_true", help="Create a public Gradi
 _parser.add_argument("--port", type=int, default=7863, help="Server port")
 _parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")
 _parser.add_argument("--no-compile", action="store_true", help="Disable torch.compile (avoids Triton requirement)")
-_parser.add_argument("--vae-tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions, adds latency)")
+_parser.add_argument(
+    "--vae-tiling", action="store_true", help="Enable VAE tiling (prevents OOM at high resolutions, adds latency)"
+)
 APP_ARGS = _parser.parse_args() if __name__ == "__main__" else _parser.parse_args([])
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
@@ -250,6 +252,7 @@ def generate(
     log.info("Image: %s mode=%s", result.size, result.mode)
 
     import numpy as np
+
     return np.array(result)
 
 
@@ -269,6 +272,7 @@ def on_model_change(model_name: str):
 def build_app() -> gr.Blocks:
     with gr.Blocks(
         title="DreamLite",
+        analytics_enabled=False,
     ) as app:
         gr.Markdown(
             "# DreamLite\n"
