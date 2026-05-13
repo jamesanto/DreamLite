@@ -66,26 +66,12 @@ def _tensor_to_img(tensor: torch.Tensor) -> Image.Image:
     return Image.fromarray((arr * 255).astype(np.uint8))
 
 
-def _try_whole_image(model, input_tensor, img_w, img_h, out_w, out_h, scale, tile_pad):
-    """Attempt to upscale the entire image in a single forward pass (fastest path)."""
-    try:
-        logger.info("Upscaling %dx%d → %dx%d (whole image, single pass)", img_w, img_h, out_w, out_h)
-        output = model(input_tensor)
-        result = _tensor_to_img(output)
-        del output
-        return result
-    except torch.cuda.OutOfMemoryError:
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        return None
-
-
 @torch.inference_mode()
 def upscale_tiled(
     img: Image.Image,
     device: torch.device = None,
     dtype: torch.dtype = torch.float16,
-    tile_size: int = 0,
+    tile_size: int = 512,
     tile_pad: int = 16,
 ) -> Image.Image:
     """
@@ -95,8 +81,7 @@ def upscale_tiled(
         img: Input PIL Image (RGB).
         device: CUDA device (defaults to cuda:0 if available).
         dtype: Inference dtype (fp16 recommended for speed/VRAM).
-        tile_size: Size of each processing tile. 0 = auto (try whole image first,
-                   fall back to tiles on OOM).
+        tile_size: Size of each processing tile (default 512).
         tile_pad: Overlap padding between tiles to avoid seam artifacts.
 
     Returns:
@@ -114,14 +99,6 @@ def upscale_tiled(
 
     input_tensor = _img_to_tensor(img, device, use_half)
     _, _, img_h, img_w = input_tensor.shape
-
-    if tile_size <= 0:
-        result = _try_whole_image(model, input_tensor, img_w, img_h, out_w, out_h, scale, tile_pad)
-        if result is not None:
-            del input_tensor
-            return result
-        tile_size = 512
-        logger.info("Whole-image upscale OOM — falling back to %dpx tiles", tile_size)
 
     output = torch.zeros((1, 3, out_h, out_w), dtype=input_tensor.dtype, device=device)
 
