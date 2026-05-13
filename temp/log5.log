@@ -1,0 +1,49 @@
+╭─shado@Shadow   DreamLite  main ≡   1.395s                                                                         pwsh 100    23:13:14 ╰─❯❯❯ mise run app --no-compile
+[app] $ uv run python app.py --no-compile
+23:13:39 INFO Device: cuda | Dtype: torch.float16
+23:13:39 INFO GPU: NVIDIA GeForce RTX 2060 with Max-Q Design (6.0 GB VRAM) | Turing: True
+23:13:39 INFO bitsandbytes available: True
+23:13:39 INFO torch.compile disabled via --no-compile
+23:13:39 INFO Starting DreamLite app on 127.0.0.1:7863
+* Running on local URL:  http://127.0.0.1:7863
+23:13:40 INFO HTTP Request: GET http://127.0.0.1:7863/gradio_api/startup-events "HTTP/1.1 200 OK"
+23:13:40 INFO HTTP Request: HEAD http://127.0.0.1:7863/ "HTTP/1.1 200 OK"
+* To create a public link, set `share=True` in `launch()`.
+23:13:40 INFO HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+23:13:50 INFO ────────────────────────────────────────────────────────────
+23:13:50 INFO Task: generate | Model: DreamLite-base (20 steps, high quality)
+23:13:50 INFO Prompt: astronaut
+23:13:50 INFO Steps: 2 | Guidance: 3.5 | Seed: 42
+23:13:50 INFO Loading DreamLite-base (20 steps, high quality) with 8-bit text encoder...
+23:13:51 INFO We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading pipeline components...: 100%|████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:01<00:00,  3.46it/s]
+23:13:57 INFO Enabled flash/mem-efficient SDPA and cudnn benchmark.
+23:13:57 INFO Pipeline ready in 2.0s
+23:13:57 INFO VRAM: 3.02 GB allocated, 3.04 GB reserved
+23:13:57 INFO Resolution: 1024 × 1024
+23:14:05 INFO
+╔══════════════════════════════════════════════════════════╗
+║              DreamLite Profiling Summary                 ║
+╠══════════════════════════════════════════════════════════╣
+║ Task: generate    Resolution: 1024×1024  CFG batch: 2     ║
+║ Steps: 2         Dtype: float16    Device: cuda:0      ║
+╠══════════════════════════════════════════════════════════╣
+║ Phase                          Time                      ║
+║ ─────────────────────────────  ─────────                 ║
+║ Text Encode (Qwen3-VL)           0.49s                    ║
+║ Text Offload → CPU               0.00s                    ║
+║ UNet Loop ( 2 steps)              7.42s                    ║
+║   ├─ First step                 6.249s                    ║
+║   ├─ Last step                  1.176s                    ║
+║   └─ Avg per step               3.712s                    ║
+║ VAE Decode                       0.57s                    ║
+║ Text Reload → GPU                0.00s                    ║
+╠══════════════════════════════════════════════════════════╣
+║ TOTAL                            8.49s                    ║
+║ Peak VRAM: 4.41 GB  Current: 3.03 GB                  ║
+╚══════════════════════════════════════════════════════════╝
+23:14:05 INFO Generated in 8.50s (0.24 steps/s)
+23:14:05 INFO Peak VRAM: 3.03 GB
+23:14:05 INFO Output type: Image
+23:14:05 INFO Image: (1024, 1024) mode=RGB
+[app] ERROR task failed
