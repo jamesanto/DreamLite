@@ -451,14 +451,14 @@ def build_app() -> gr.Blocks:
                     steps_slider = gr.Slider(
                         minimum=1,
                         maximum=50,
-                        value=28,
+                        value=4,
                         step=1,
                         label="Inference Steps",
                     )
                     guidance_slider = gr.Slider(
                         minimum=0.0,
                         maximum=20.0,
-                        value=3.5,
+                        value=1.0,
                         step=0.1,
                         label="Guidance Scale",
                     )
