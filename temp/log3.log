@@ -1,0 +1,408 @@
+0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_subclasses\fake_tensor.py", line 1816, in dispatch
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._cached_dispatch_impl(func, types, args, kwargs)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_subclasses\fake_tensor.py", line 1377, in _cached_dispatch_impl
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     output = self._dispatch_impl(func, types, args, kwargs)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_subclasses\fake_tensor.py", line 2384, in _dispatch_impl
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     r = func(*args, **kwargs)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]         ^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_ops.py", line 723, in __call__
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._op(*args, **kwargs)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_prims_common\wrappers.py", line 291, in _fn
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     result = fn(*args, **kwargs)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]              ^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_prims_common\wrappers.py", line 143, in _fn
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     result = fn(**bound.arguments)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]              ^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_refs\__init__.py", line 1095, in _ref
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     a, b = _maybe_broadcast(a, b)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_refs\__init__.py", line 437, in _maybe_broadcast
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     common_shape = _broadcast_shapes(
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                    ^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_refs\__init__.py", line 425, in _broadcast_shapes
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     torch._check(
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\__init__.py", line 1656, in _check
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     _check_with(RuntimeError, cond, message)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\__init__.py", line 1638, in _check_with
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     raise error_type(message_evaluated)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] torch._dynamo.exc.TorchRuntimeError: Failed running call_function <built-in function mul>(*(FakeTensor(..., device='cuda:0', size=(2, 4, 131072, 16), dtype=torch.float16), Parameter(FakeTensor(..., device='cuda:0', size=(64,), dtype=torch.float16,
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            requires_grad=True))), **{}):
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Attempting to broadcast a dimension of length 64 at -1! Mismatching argument at index 1 had torch.Size([64]); but expected shape should be broadcastable to [2, 4, 131072, 16]
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] from user code:
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]    File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\diffusers\models\attention_processor.py", line 2761, in __call__
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     query = attn.norm_q(query)
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\diffusers\models\normalization.py", line 561, in forward
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     hidden_states = hidden_states * self.weight
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Set TORCH_LOGS="+dynamo" and TORCHDYNAMO_VERBOSE=1 for more information
+W0513 22:49:06.343000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+╭─shado@Shadow   DreamLite  main ≡   0ms                                                                            pwsh 100    22:49:06 ╰─❯❯❯ W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] WON'T CONVERT prepare_attention_mask C:\Users\shado\Documents\DreamLite\dreamlite\models\attention_processor.py line 698
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] due to:
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Traceback (most recent call last):
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 1164, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     result = self._inner_convert(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]              ^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 547, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 986, in _compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     guarded_code = compile_inner(code, one_graph, hooks, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 715, in compile_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _compile_inner(code, one_graph, hooks, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_utils_internal.py", line 95, in wrapper_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return function(*args, **kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 750, in _compile_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     out_code = transform_code_object(code, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\bytecode_transformation.py", line 1361, in transform_code_object
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     transformations(instructions, code_options)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 231, in _fn
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return fn(*args, **kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 662, in transform
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     tracer.run()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 2868, in run
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     super().run()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 1052, in run
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     while self.step():
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]           ^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 962, in step
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.dispatch_table[inst.opcode](self, inst)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 3048, in RETURN_VALUE
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._return(inst)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 3033, in _return
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.output.compile_subgraph(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1101, in compile_subgraph
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.compile_and_call_fx_graph(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1382, in compile_and_call_fx_graph
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = self.call_user_compiler(gm)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1432, in call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._call_user_compiler(gm)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1483, in _call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     raise BackendCompilerFailed(self.compiler_fn, e).with_traceback(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1462, in _call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = compiler_fn(gm, self.example_inputs())
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\repro\after_dynamo.py", line 130, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_gm = compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\__init__.py", line 2340, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return compile_fx(model_, inputs_, config_patches=self.config)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1863, in compile_fx
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return aot_autograd(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\backends\common.py", line 83, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     cg = aot_module_simplified(gm, example_inputs, **self.kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 1155, in aot_module_simplified
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = dispatch_and_compile()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 1131, in dispatch_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn, _ = create_aot_dispatcher_function(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 580, in create_aot_dispatcher_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _create_aot_dispatcher_function(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 830, in _create_aot_dispatcher_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn, fw_metadata = compiler_fn(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                                ^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\_aot_autograd\jit_compile_runtime_wrappers.py", line 203, in aot_dispatch_base
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fw = compiler(fw_module, updated_flat_args)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 489, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self.compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1741, in fw_compiler_base
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return inner_compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 569, in compile_fx_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\repro\after_aot.py", line 102, in debug_wrapper
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     inner_compiled_fn = compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 685, in _compile_fx_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     mb_compiled_graph = fx_codegen_and_compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                         ^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1129, in fx_codegen_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1044, in codegen_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = graph.compile_to_module().call
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 2027, in compile_to_module
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._compile_to_module()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 2033, in _compile_to_module
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                                                              ^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 1964, in codegen
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.scheduler = Scheduler(self.operations)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1798, in __init__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._init(nodes)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1816, in _init
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.nodes = [self.create_scheduler_node(n) for n in nodes]
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1947, in create_scheduler_node
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return SchedulerNode(self, node)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 893, in __init__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._compute_attrs()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 907, in _compute_attrs
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     group_fn = self.scheduler.get_backend(device).group_fn
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 3441, in get_backend
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.backends[device] = self.create_backend(device)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 3432, in create_backend
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     raise RuntimeError(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] torch._dynamo.exc.BackendCompilerFailed: backend='inductor' raised:
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] RuntimeError: Cannot find a working triton installation. Either the package is not installed or it is too old. More information on installing Triton can be found at https://github.com/openai/triton
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Set TORCH_LOGS="+dynamo" and TORCHDYNAMO_VERBOSE=1 for more information
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Traceback (most recent call last):
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 1164, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     result = self._inner_convert(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]              ^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 547, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 986, in _compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     guarded_code = compile_inner(code, one_graph, hooks, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 715, in compile_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _compile_inner(code, one_graph, hooks, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_utils_internal.py", line 95, in wrapper_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return function(*args, **kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 750, in _compile_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     out_code = transform_code_object(code, transform)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\bytecode_transformation.py", line 1361, in transform_code_object
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     transformations(instructions, code_options)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 231, in _fn
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return fn(*args, **kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\convert_frame.py", line 662, in transform
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     tracer.run()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 2868, in run
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     super().run()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 1052, in run
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     while self.step():
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]           ^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 962, in step
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.dispatch_table[inst.opcode](self, inst)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 3048, in RETURN_VALUE
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._return(inst)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\symbolic_convert.py", line 3033, in _return
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.output.compile_subgraph(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1101, in compile_subgraph
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.compile_and_call_fx_graph(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1382, in compile_and_call_fx_graph
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = self.call_user_compiler(gm)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1432, in call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._call_user_compiler(gm)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1483, in _call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     raise BackendCompilerFailed(self.compiler_fn, e).with_traceback(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\output_graph.py", line 1462, in _call_user_compiler
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = compiler_fn(gm, self.example_inputs())
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\repro\after_dynamo.py", line 130, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_gm = compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\__init__.py", line 2340, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return compile_fx(model_, inputs_, config_patches=self.config)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1863, in compile_fx
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return aot_autograd(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\backends\common.py", line 83, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     cg = aot_module_simplified(gm, example_inputs, **self.kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 1155, in aot_module_simplified
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = dispatch_and_compile()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 1131, in dispatch_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn, _ = create_aot_dispatcher_function(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 580, in create_aot_dispatcher_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return _create_aot_dispatcher_function(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 830, in _create_aot_dispatcher_function
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn, fw_metadata = compiler_fn(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                                ^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\_aot_autograd\jit_compile_runtime_wrappers.py", line 203, in aot_dispatch_base
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fw = compiler(fw_module, updated_flat_args)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_functorch\aot_autograd.py", line 489, in __call__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self.compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1741, in fw_compiler_base
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return inner_compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 569, in compile_fx_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return wrap_compiler_debug(_compile_fx_inner, compiler_name="inductor")(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\repro\after_aot.py", line 102, in debug_wrapper
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     inner_compiled_fn = compiler_fn(gm, example_inputs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 685, in _compile_fx_inner
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     mb_compiled_graph = fx_codegen_and_compile(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                         ^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1129, in fx_codegen_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\compile_fx.py", line 1044, in codegen_and_compile
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     compiled_fn = graph.compile_to_module().call
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 2027, in compile_to_module
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return self._compile_to_module()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 2033, in _compile_to_module
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                                                              ^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\graph.py", line 1964, in codegen
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.scheduler = Scheduler(self.operations)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1798, in __init__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._init(nodes)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1816, in _init
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.nodes = [self.create_scheduler_node(n) for n in nodes]
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 1947, in create_scheduler_node
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     return SchedulerNode(self, node)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]            ^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 893, in __init__
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self._compute_attrs()
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 907, in _compute_attrs
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     group_fn = self.scheduler.get_backend(device).group_fn
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 3441, in get_backend
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     self.backends[device] = self.create_backend(device)
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]   File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_inductor\scheduler.py", line 3432, in create_backend
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]     raise RuntimeError(
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] torch._dynamo.exc.BackendCompilerFailed: backend='inductor' raised:
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] RuntimeError: Cannot find a working triton installation. Either the package is not installed or it is too old. More information on installing Triton can be found at https://github.com/openai/triton
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233] Set TORCH_LOGS="+dynamo" and TORCHDYNAMO_VERBOSE=1 for more information
+W0513 22:49:06.433000 2872 .venv\Lib\site-packages\torch\_dynamo\convert_frame.py:1233]
+Traceback (most recent call last):
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\queueing.py", line 867, in process_events
+    response = await route_utils.call_process_api(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\route_utils.py", line 374, in call_process_api
+    output = await app.get_blocks().process_api(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\blocks.py", line 2179, in process_api
+    result = await self.call_function(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\blocks.py", line 1636, in call_function
+    prediction = await anyio.to_thread.run_sync(  # type: ignore
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2518, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1002, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\utils.py", line 1061, in wrapper
+    response = f(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\gradio\utils.py", line 1061, in wrapper
+    response = f(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\app.py", line 192, in generate
+    result = pipe(**kwargs).images[0]
+             ^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\utils\_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\pipelines\dreamlite\pipeline_dreamlite.py", line 516, in __call__
+    noise_pred = self.unet(
+                 ^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\_dynamo\eval_frame.py", line 574, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\models\unets\unet_2d_condition_mobile.py", line 1286, in forward
+    sample, res_samples = downsample_block(
+                          ^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\models\unets\unet_2d_blocks.py", line 1837, in forward
+    hidden_states = attn(
+                    ^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\models\transformers\transformer_2d.py", line 457, in forward
+    hidden_states = block(
+                    ^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\models\attention.py", line 576, in forward
+    attn_output = self.attn2(
+                  ^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\dreamlite\models\attention_processor.py", line 599, in forward
+    return self.processor(
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\diffusers\models\attention_processor.py", line 2761, in __call__
+    query = attn.norm_q(query)
+            ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shado\Documents\DreamLite\.venv\Lib\site-packages\diffusers\models\normalization.py", line 561, in forward
+    hidden_states = hidden_states * self.weight
+                    ~~~~~~~~~~~~~~^~~~~~~~~~~~~
+RuntimeError: The size of tensor a (16) must match the size of tensor b (64) at non-singleton dimension 3
