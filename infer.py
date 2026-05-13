@@ -50,6 +50,7 @@ def parse_args():
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--guidance_scale", type=float, default=3.5)
     parser.add_argument("--image_guidance_scale", type=float, default=1.0)
+    parser.add_argument("--seed", type=int, default=-1, help="Random seed (-1 = random)")
 
     # Optimization flags
     parser.add_argument(
@@ -160,7 +161,9 @@ def main():
         "guidance_scale": args.guidance_scale,
         "image_guidance_scale": args.image_guidance_scale,
         "num_inference_steps": args.num_inference_steps,
-        "generator": torch.Generator("cpu").manual_seed(42),
+        "generator": torch.Generator("cpu").manual_seed(
+            args.seed if args.seed >= 0 else torch.randint(0, 2**32, (1,)).item()
+        ),
         "callback_on_step_end": cli_step_callback,
     }
     if crop_box is not None:

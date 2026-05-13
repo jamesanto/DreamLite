@@ -254,6 +254,10 @@ def generate(
     progress(0, desc="Loading model...")
     yield None
     pipe = _load_pipeline(model_name)
+
+    if seed < 0:
+        seed = torch.randint(0, 2**32, (1,)).item()
+        log.info("Random seed: %d", seed)
     generator = torch.Generator(device="cpu").manual_seed(seed)
 
     width, height = _parse_resolution(resolution)
@@ -418,8 +422,8 @@ def build_app() -> gr.Blocks:
                         label="Image Guidance Scale",
                     )
                     seed_input = gr.Number(
-                        value=42,
-                        label="Seed",
+                        value=-1,
+                        label="Seed (-1 = random)",
                         precision=0,
                     )
 
