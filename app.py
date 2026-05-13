@@ -209,7 +209,6 @@ def on_model_change(model_name: str):
 def build_app() -> gr.Blocks:
     with gr.Blocks(
         title="DreamLite",
-        theme=gr.themes.Soft(),
     ) as app:
         gr.Markdown(
             "# DreamLite\n"
@@ -354,4 +353,4 @@ if __name__ == "__main__":
 
     log.info("Starting DreamLite app on %s:%d", args.host, args.port)
     app = build_app()
-    app.launch(server_name=args.host, server_port=args.port, share=args.share)
+    app.launch(server_name=args.host, server_port=args.port, share=args.share, theme=gr.themes.Soft())

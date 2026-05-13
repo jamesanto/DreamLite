@@ -7,12 +7,16 @@ PYTHONDONTWRITEBYTECODE = "1"
 UV_LINK_MODE = "copy"
 
 [tasks.install]
-description = "Install project dependencies via uv"
+description = "Install project dependencies (includes CUDA PyTorch on Windows/Linux)"
 run = "uv sync"
 
 [tasks.install-dev]
 description = "Install project with dev dependencies"
 run = "uv sync --extra dev"
+
+[tasks.install-cpu]
+description = "Install with CPU-only PyTorch (no CUDA)"
+run = "uv sync --no-sources"
 
 [tasks.app]
 description = "Launch the DreamLite Gradio web app"
