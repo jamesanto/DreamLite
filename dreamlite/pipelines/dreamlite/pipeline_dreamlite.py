@@ -397,7 +397,9 @@ class DreamLitePipeline(
 
         # 2. Prepare Dimensions (Buckets)
         if image is not None:  # edit task, resize to certain bucket
-            if bucket == 0:
+            if bucket == -1:
+                pass  # caller already set width/height to the optimal resolution
+            elif bucket == 0:
                 height = width = 1024
             elif bucket == 1:
                 height = width = 2048

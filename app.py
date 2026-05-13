@@ -99,6 +99,22 @@ RESOLUTIONS = [
     "768 × 1344 (9:16)",
 ]
 
+EDIT_BUCKETS = [
+    (1024, 1024),
+    (1152, 896),
+    (896, 1152),
+    (1216, 832),
+    (832, 1216),
+    (1344, 768),
+    (768, 1344),
+]
+
+
+def _best_edit_resolution(img_w: int, img_h: int) -> tuple[int, int]:
+    """Pick the bucket resolution closest in aspect ratio to the input image."""
+    target_ar = img_w / img_h
+    return min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
+
 # ─── State ───────────────────────────────────────────────────────────────────
 
 _pipeline_cache: dict = {}
@@ -200,8 +216,10 @@ def generate(
 
     width, height = _parse_resolution(resolution)
     if input_image is not None:
-        width, height = input_image.size
-    log.info("Resolution: %d × %d", width, height)
+        width, height = _best_edit_resolution(*input_image.size)
+        log.info("Edit resolution: %d × %d (matched from %d × %d input)", width, height, *input_image.size)
+    else:
+        log.info("Resolution: %d × %d", width, height)
 
     kwargs = {
         "prompt": prompt,
@@ -211,6 +229,9 @@ def generate(
         "num_inference_steps": steps,
         "generator": generator,
     }
+
+    if input_image is not None:
+        kwargs["bucket"] = -1
 
     config = MODEL_REGISTRY[model_name]
     if config["supports_cfg"]:

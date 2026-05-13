@@ -101,8 +101,17 @@ def main():
     # Setup Data
     prompt = args.prompt
     input_image = load_image(args.image_path) if args.image_path else None
+
+    EDIT_BUCKETS = [
+        (1024, 1024), (1152, 896), (896, 1152),
+        (1216, 832), (832, 1216), (1344, 768), (768, 1344),
+    ]
+
     if input_image is not None:
-        width, height = input_image.size
+        img_w, img_h = input_image.size
+        target_ar = img_w / img_h
+        width, height = min(EDIT_BUCKETS, key=lambda b: abs((b[0] / b[1]) - target_ar))
+        print(f"Edit mode: input {img_w}×{img_h} → matched bucket {width}×{height}")
     else:
         width, height = args.width, args.height
 
@@ -115,18 +124,22 @@ def main():
         if step == total:
             print()
 
-    image = pipeline(
-        prompt=prompt,
-        negative_prompt=args.negative_prompt,
-        image=input_image,
-        height=height,
-        width=width,
-        guidance_scale=args.guidance_scale,
-        image_guidance_scale=args.image_guidance_scale,
-        num_inference_steps=args.num_inference_steps,
-        generator=torch.Generator("cpu").manual_seed(42),
-        callback_on_step_end=cli_step_callback,
-    ).images[0]
+    call_kwargs = {
+        "prompt": prompt,
+        "negative_prompt": args.negative_prompt,
+        "image": input_image,
+        "height": height,
+        "width": width,
+        "guidance_scale": args.guidance_scale,
+        "image_guidance_scale": args.image_guidance_scale,
+        "num_inference_steps": args.num_inference_steps,
+        "generator": torch.Generator("cpu").manual_seed(42),
+        "callback_on_step_end": cli_step_callback,
+    }
+    if input_image is not None:
+        call_kwargs["bucket"] = -1
+
+    image = pipeline(**call_kwargs).images[0]
 
     if image.size != (width, height):
         image = image.resize((width, height), Image.Resampling.LANCZOS)

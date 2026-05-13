@@ -5,6 +5,7 @@ uv = "latest"
 [env]
 PYTHONDONTWRITEBYTECODE = "1"
 UV_LINK_MODE = "copy"
+_.python.venv = { path = ".venv", create = true }
 
 [tasks.install]
 description = "Install project dependencies (includes CUDA PyTorch on Windows/Linux)"
